@@ -6,10 +6,20 @@ export default function UserList() {
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
 
+
+    const token = localStorage.getItem("access_token");
+
+
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await fetch("http://localhost:8080/admin/users");
+                const res = await fetch("http://localhost:8080/admin/users", {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
                 const json = await res.json();
                 setRows(Array.isArray(json.data) ? json.data : []);
             } catch {
@@ -34,7 +44,10 @@ export default function UserList() {
         try {
             const res = await fetch("http://localhost:8080/admin/users/status", {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` // Gửi token lên backend
+                },
                 body: JSON.stringify({
                     user_id: selectedUser.user_id,
                     is_deleted: newStatus
