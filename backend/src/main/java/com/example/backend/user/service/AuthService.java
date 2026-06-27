@@ -15,6 +15,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
+
 @Service
 public class AuthService {
 
@@ -85,5 +87,17 @@ public class AuthService {
                         .isDeleted(0)
                         .build())
                 .build();
+    }
+
+    public Map<String, Object> getCurrentUserProfile(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+
+        return Map.of(
+                "email", user.getEmail(),
+                "full_name", user.getFullName(),
+                "role_id", user.getRole().getId(),
+                "is_deleted", user.getIsDeleted() ? 1 : 0
+        );
     }
 }

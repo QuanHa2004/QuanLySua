@@ -1,4 +1,4 @@
-import SideBar from "../../component/side-bar";
+
 import { useEffect, useState } from "react";
 
 export default function Dashboard() {
@@ -35,11 +35,8 @@ export default function Dashboard() {
 
   return (
     <div className="flex min-h-screen bg-[#f8f9fa] font-sans">
-      <div className="fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 translate-x-0">
-        <SideBar />
-      </div>
 
-      <main className="flex-1 ml-64 p-8">
+      <main className="flex-1 p-8">
         <div className="w-full max-w-7xl mx-auto">
           
           <div className="mb-8">

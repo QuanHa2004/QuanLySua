@@ -6,7 +6,10 @@ import com.example.backend.user.dto.response.AuthResponse;
 import com.example.backend.user.exception.AccountLockedException;
 import com.example.backend.user.service.AuthService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -45,17 +48,14 @@ public class AuthController {
         }
     }
 
-    // FE dùng API này sau khi đăng nhập Google thành công
     @GetMapping("/current_user")
-    public ResponseEntity<?> getCurrentUser(@RequestHeader("Authorization") String bearerToken) {
-        // Trong thực tế, bạn sẽ parse token này hoặc lấy user từ SecurityContextHolder
-        // User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-        // Code minh họa mock trả về:
-        return ResponseEntity.ok(Map.of(
-                "is_deleted", 0,
-                "role_id", 2, // Lấy từ DB
-                "email", "user@example.com"
-        ));
+    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal Jwt jwt) {
+        try {
+            Map<String, Object> userData = authService.getCurrentUserProfile(jwt.getSubject());
+            return ResponseEntity.ok(userData);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", e.getMessage()));
+        }
     }
 }

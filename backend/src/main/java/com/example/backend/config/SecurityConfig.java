@@ -44,7 +44,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Cấu hình dựa trên API Frontend thực tế của bạn
                         .requestMatchers("/register", "/login", "/auth/**").permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/**").hasRole("Admin")
                         .anyRequest().authenticated()
                 )
 
@@ -76,8 +76,8 @@ public class SecurityConfig {
         // Theo mặc định Spring thêm tiền tố "SCOPE_", ta đổi nó thành "ROLE_" để dùng được .hasRole("ADMIN")
         converter.setAuthorityPrefix("ROLE_");
 
-        // Trỏ vào claim "role_id" hoặc "role" mà ta đã add vào Token lúc Login
-        converter.setAuthoritiesClaimName("role_id");
+        // Trỏ vào claim "role" mà ta đã add vào Token lúc Login
+        converter.setAuthoritiesClaimName("role");
 
         JwtAuthenticationConverter jwtConverter = new JwtAuthenticationConverter();
         jwtConverter.setJwtGrantedAuthoritiesConverter(converter);

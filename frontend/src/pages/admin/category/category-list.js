@@ -7,13 +7,33 @@ export default function CategoryList() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await fetch("http://localhost:8080/admin/categories");
+                // Lấy token đã lưu trong localStorage
+                const token = localStorage.getItem("access_token");
+
+                const res = await fetch("http://localhost:8080/admin/categories", {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}` // Gửi token lên backend
+                    }
+                });
+
+                // Xử lý riêng trường hợp token hết hạn hoặc không đủ quyền Admin
+                if (res.status === 401 || res.status === 403) {
+                    throw new Error("Phiên đăng nhập hết hạn hoặc không có quyền truy cập!");
+                }
+
                 if (!res.ok) throw new Error("Lỗi kết nối server");
+
                 const data = await res.json();
-                if (Array.isArray(data.data)) setCategoryList(data.data);
-                else setCategoryList([]);
+
+                if (Array.isArray(data.data)) {
+                    setCategoryList(data.data);
+                } else {
+                    setCategoryList([]);
+                }
             } catch (error) {
-                console.error("Lỗi tải dữ liệu:", error);
+                console.error("Lỗi tải dữ liệu:", error.message);
                 setCategoryList([]);
             } finally {
                 setIsLoading(false);

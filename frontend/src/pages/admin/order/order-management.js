@@ -1,15 +1,13 @@
-import SideBar from "../../../component/side-bar";
+
 import OrderList from "./order-list";
 
 export default function OrderManagement() {
   return (
     <div className="relative flex min-h-screen bg-[#f8f9fa] font-sans">
       <div className="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
-        <div className="ml-64 flex flex-row min-h-screen">
+        <div className="flex flex-row min-h-screen">
 
-          <div className="fixed inset-y-0 left-0 z-50 w-64">
-            <SideBar />
-          </div>
+
 
           <main className="flex-1 p-8 w-full">
             <div className="w-full max-w-7xl mx-auto">

@@ -18,9 +18,15 @@ export default function AddCategory() {
     setIsSubmitting(true);
 
     try {
+      const token = localStorage.getItem("access_token");
+
+    
       const res = await fetch("http://localhost:8080/admin/categories/add", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}` // Gửi token lên backend
+        },
         body: JSON.stringify({ category_name: categoryName }),
       });
 
