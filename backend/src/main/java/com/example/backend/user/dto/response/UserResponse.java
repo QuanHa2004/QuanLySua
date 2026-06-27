@@ -6,23 +6,17 @@ import lombok.Data;
 
 @Data
 @Builder
-public class AuthResponse {
-    @JsonProperty("access_token")
-    private String accessToken;
+public class UserResponse {
+    @JsonProperty("user_id")
+    private Integer userId;
 
-    @JsonProperty("refresh_token")
-    private String refreshToken;
+    @JsonProperty("full_name")
+    private String fullName;
 
-    private UserDto user;
+    private String email;
+    private String phone;
+    private String address;
 
-    @Data
-    @Builder
-    public static class UserDto {
-        @JsonProperty("role_id")
-        private Integer roleId;
-        private String email;
-        private String fullName;
-        @JsonProperty("is_deleted")
-        private Integer isDeleted; // Trả về 1 (true) hoặc 0 (false) để FE xử lý
-    }
+    @JsonProperty("is_deleted")
+    private Integer isDeleted; // Trả về 1 (Đã khóa) hoặc 0 (Hoạt động)
 }

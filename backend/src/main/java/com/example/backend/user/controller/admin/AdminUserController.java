@@ -1,61 +1,39 @@
-package com.example.backend.user.controller;
+package com.example.backend.user.controller.admin;
 
-import com.example.backend.user.dto.request.LoginRequest;
-import com.example.backend.user.dto.request.RegisterRequest;
-import com.example.backend.user.dto.response.AuthResponse;
-import com.example.backend.user.exception.AccountLockedException;
-import com.example.backend.user.service.AuthService;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
+import com.example.backend.user.dto.request.UpdateStatusUserRequest;
+import com.example.backend.user.dto.response.UserResponse;
+import com.example.backend.user.service.UserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping()
-public class AuthController {
+@RequestMapping("/admin/users")
+@RequiredArgsConstructor
+public class AdminUserController {
 
-    private final AuthService authService;
+    private final UserService userService;
 
-    public AuthController(AuthService authService) {
-        this.authService = authService;
+    // API GET: http://localhost:8080/admin/users
+    @GetMapping
+    public ResponseEntity<?> getAllUsers() {
+        List<UserResponse> users = userService.getAllUsers();
+        // Bọc trong object "data" khớp với logic setRows(json.data) của FE
+        return ResponseEntity.ok(Map.of("data", users));
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+    // API PUT: http://localhost:8080/admin/users/status
+    @PutMapping("/status")
+    public ResponseEntity<?> updateUserStatus(@RequestBody UpdateStatusUserRequest request) {
         try {
-            authService.register(request);
-            // FE mong đợi res.ok nếu thành công, không cần data cụ thể
-            return ResponseEntity.ok(Map.of("message", "Đăng ký thành công"));
+            userService.updateUserStatus(request);
+            // Trả về success: true để FE xác nhận cập nhật thành công
+            return ResponseEntity.ok(Map.of("success", true, "message", "Cập nhật trạng thái thành công"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-        }
-    }
-
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
-        try {
-            AuthResponse response = authService.login(request);
-            return ResponseEntity.ok(response);
-        } catch (AccountLockedException e) {
-            // Đảm bảo trả đúng mã 403 Forbidden cho FE
-            return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
-
-    @GetMapping("/current_user")
-    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal Jwt jwt) {
-        try {
-            Map<String, Object> userData = authService.getCurrentUserProfile(jwt.getSubject());
-            return ResponseEntity.ok(userData);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
         }
     }
 }

@@ -1,13 +1,13 @@
 package com.example.backend.user.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import jakarta.validation.constraints.NotBlank;
 
 @Data
-public class LoginRequest {
-    @NotBlank(message = "Email không được để trống")
-    private String email;
+public class UpdateStatusUserRequest {
+    @JsonProperty("user_id")
+    private Integer userId;
 
-    @NotBlank(message = "Mật khẩu không được để trống")
-    private String password;
+    @JsonProperty("is_deleted")
+    private Integer isDeleted;
 }
