@@ -34,7 +34,7 @@ public class ProductDetail {
     @Column(columnDefinition = "TEXT")
     private String ingredients;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "`usage`", columnDefinition = "TEXT")
     private String usage;
 
     @Column(columnDefinition = "TEXT")

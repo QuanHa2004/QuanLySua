@@ -5,7 +5,6 @@ import Dashboard from '../pages/admin/dashboard';
 
 import Order from '../pages/admin/order/order-management';
 import AddProduct from '../pages/admin/product/add-product';
-import AddVariant from '../pages/admin/product/add-variant';
 import ProductManagement from '../pages/admin/product/product-management';
 
 import UserManagement from '../pages/admin/user/user-management';
@@ -46,7 +45,6 @@ export default function AppRoutes() {
         <Route path="/admin/user" element={<UserManagement />} />
         <Route path="/admin/add-category" element={<AddCategory />} />
         <Route path="/admin/add-product" element={<AddProduct />} />
-        <Route path="/admin/add-variant" element={<AddVariant />} />
       </Route>
 
       <Route path="/" element={<Home />} />

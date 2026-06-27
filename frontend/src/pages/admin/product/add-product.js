@@ -7,12 +7,17 @@ export default function AddProduct() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [categories, setCategories] = useState([]);
-  const [manufacturers, setManufacturers] = useState([]);
+
+  const token = localStorage.getItem("access_token");
+
 
   const [productData, setProductData] = useState({
     product_name: "",
     category_id: "",
     manufacturer_id: "",
+    price: "",
+    quantity: "",
+    expiration_date: "",
     image_url: "",
     description: "",
     is_hot: 0 // Giá trị mặc định là 0 (Không hot)
@@ -44,15 +49,29 @@ export default function AddProduct() {
     "text-[#1a3c7e] text-sm font-bold mb-1.5 block uppercase tracking-wide";
 
   const fetchList = useCallback((url, setter) => {
-    fetch(url)
-      .then(res => res.json())
+    fetch(url, {
+      method: "GET", // Lấy danh sách nên dùng method GET
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}` // Đính kèm token vào đây
+      }
+    })
+      .then(res => {
+        // Nên check res.ok để bắt lỗi 401/403 nếu token hết hạn hoặc sai quyền
+        if (!res.ok) {
+          throw new Error(`Lỗi kết nối: ${res.status}`);
+        }
+        return res.json();
+      })
       .then(data => setter(data.data || []))
-      .catch(() => setter([]));
+      .catch((error) => {
+        console.error("Lỗi khi tải dữ liệu:", error);
+        setter([]); // Nếu lỗi thì set mảng rỗng để UI không bị vỡ
+      });
   }, []);
 
   useEffect(() => {
     fetchList("http://localhost:8080/admin/categories", setCategories);
-    fetchList("http://localhost:8080/admin/manufacturers", setManufacturers);
   }, [fetchList]);
 
   const handleChange = (setter) => (e) =>
@@ -104,7 +123,7 @@ export default function AddProduct() {
     try {
       const res = await fetch("http://localhost:8080/admin/products/add", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(payload),
       });
 
@@ -132,7 +151,7 @@ export default function AddProduct() {
 
   return (
     <div className="relative flex min-h-screen bg-[#f8f9fa] font-sans">
-      <div className="ml-64 w-full">
+      <div className="w-full">
         <div className="fixed inset-y-0 left-0 z-50 w-64">
           <SideBar />
         </div>
@@ -144,15 +163,7 @@ export default function AddProduct() {
               <p className="text-gray-500 text-sm">Nhập thông tin chi tiết đầy đủ cho sản phẩm sữa.</p>
             </div>
 
-            <button
-              onClick={() => navigate('/admin/add-variant')}
-              className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-[#1a3c7e] text-white text-sm font-bold tracking-wide hover:bg-[#15326d] hover:-translate-y-0.5 transition-all shadow-md shadow-blue-100"
-            >
-              <span className="truncate flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                Thêm biến thể mới
-              </span>
-            </button>
+
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -181,16 +192,6 @@ export default function AddProduct() {
                   </select>
                 </label>
 
-                <label>
-                  <span className={labelClass}>Nhà sản xuất <span className="text-red-500">*</span></span>
-                  <select name="manufacturer_id" value={productData.manufacturer_id} onChange={handleChange(setProductData)} className={inputClass} required>
-                    <option value="">-- Chọn nhà sản xuất --</option>
-                    {manufacturers.map(m => (
-                      <option key={m.manufacturer_id} value={m.manufacturer_id}>{m.manufacturer_name}</option>
-                    ))}
-                  </select>
-                </label>
-
                 {/* --- CHECKBOX IS_HOT ĐƯỢC THÊM VÀO ĐÂY --- */}
                 <div className="flex items-end">
                   <label className="flex items-center gap-3 cursor-pointer w-full h-11 px-4 rounded-xl border border-gray-200 bg-gray-50 hover:bg-white hover:border-[#1a3c7e] transition-all">
@@ -205,6 +206,46 @@ export default function AddProduct() {
                       Hot
                     </span>
                   </label>
+                </div>
+
+                {/* Ô nhập Giá bán */}
+                <div>
+                  <label className={labelClass}>Giá bán (VNĐ)</label>
+                  <input
+                    type="number"
+                    name="price"
+                    value={productData.price}
+                    onChange={handleChange(setProductData)}
+                    className={inputClass}
+                    placeholder="VD: 350000"
+                    min="0"
+                  />
+                </div>
+
+                {/* Ô nhập Số lượng */}
+                <div>
+                  <label className={labelClass}>Số lượng tồn kho</label>
+                  <input
+                    type="number"
+                    name="quantity"
+                    value={productData.quantity}
+                    onChange={handleChange(setProductData)}
+                    className={inputClass}
+                    placeholder="VD: 100"
+                    min="0"
+                  />
+                </div>
+
+                {/* Ô chọn Hạn sử dụng */}
+                <div>
+                  <label className={labelClass}>Hạn sử dụng</label>
+                  <input
+                    type="date"
+                    name="expiration_date"
+                    value={productData.expiration_date}
+                    onChange={handleChange(setProductData)}
+                    className={inputClass}
+                  />
                 </div>
 
                 <label className="lg:col-span-3">

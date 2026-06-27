@@ -56,7 +56,7 @@ export default function AddCategory() {
   return (
     <div className="relative flex min-h-screen bg-[#f8f9fa] font-sans">
       <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
-        <div className="ml-64 flex flex-row min-h-screen">
+        <div className="flex flex-row min-h-screen">
           <div className="fixed inset-y-0 left-0 z-50 w-64">
             <SideBar />
           </div>

@@ -1,0 +1,125 @@
+package com.example.backend.product.service;
+
+import com.example.backend.product.dto.request.AddProductRequest;
+import com.example.backend.product.dto.response.AdminProductResponse;
+import com.example.backend.product.entity.Category;
+import com.example.backend.product.entity.Product;
+import com.example.backend.product.entity.ProductDetail;
+import com.example.backend.product.repo.ProductDetailRepository;
+import com.example.backend.product.repo.ProductRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.ObjectMapper;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class ProductService {
+
+    private final ProductRepository productRepository;
+    private final ProductDetailRepository productDetailRepository;
+    private final ObjectMapper objectMapper;
+
+
+    public List<AdminProductResponse> getAllProductsForAdmin() {
+        // Lấy danh sách sản phẩm gốc từ DB
+        return productRepository.findAll().stream().map(product -> {
+
+            // 1. Tạo danh sách Lô hàng (Batch) mẫu của biến thể này (nếu có)
+            List<AdminProductResponse.BatchDto> batchList = new ArrayList<>();
+            batchList.add(AdminProductResponse.BatchDto.builder()
+                    .expirationDate(product.getExpirationDate()) // Trường ngày hết hạn từ thực thể
+                    .quantity(product.getQuantity())             // Số lượng tồn kho của lô này
+                    .build());
+
+            // 2. Tạo danh sách Biến thể (Variant)
+            List<AdminProductResponse.VariantDto> variantList = new ArrayList<>();
+            variantList.add(AdminProductResponse.VariantDto.builder()
+                    .variantName(product.getName()) // Hoặc trường tên biến thể cụ thể của bạn
+                    .price(product.getPrice())
+                    .stockQuantity(product.getQuantity())
+                    .batches(batchList) // Gắn lô hàng vào biến thể
+                    .build());
+
+            // 3. Đóng gói vào đối tượng Sản phẩm hoàn chỉnh
+            return AdminProductResponse.builder()
+                    .productId(product.getId())
+                    .productName(product.getName())
+                    .isHot(product.getIsHot() != null && product.getIsHot())
+                    .isDeleted(product.getIsDeleted() != null && product.getIsDeleted())
+                    .variants(variantList) // Gắn danh sách biến thể vào sản phẩm
+                    .build();
+        }).toList();
+    }
+
+
+    @Transactional(rollbackFor = Exception.class)
+    public void addProduct(AddProductRequest request) {
+
+        // 1. Kiểm tra trùng lặp
+        if (productRepository.existsByName(request.getProductName().trim())) {
+            throw new IllegalArgumentException("DUPLICATE_PRODUCT");
+        }
+
+        // 2. Tạo Category Object rỗng (chỉ chứa ID) để map vào Product mà không cần query lại DB
+        Category categoryRef = new Category();
+        categoryRef.setId(request.getCategoryId());
+
+        // 3. Map dữ liệu vào bảng Product
+        Product product = new Product();
+        product.setName(request.getProductName().trim());
+        product.setCategory(categoryRef);
+        product.setPrice(request.getPrice());
+        product.setQuantity(request.getQuantity());
+        product.setDiscountPercent(request.getDiscountPercent());
+
+        // Nếu không có HSD thì set ngày mặc định xa tít tắp, hoặc để tùy logic của bạn
+        product.setExpirationDate(request.getExpirationDate() != null ? request.getExpirationDate() : LocalDate.now().plusYears(1));
+
+        product.setImageUrl(request.getImageUrl());
+        product.setDescription(request.getDescription());
+        product.setIsHot(request.getIsHot() == 1);
+        product.setIsDeleted(false);
+
+        // Lưu và lấy ID sản phẩm mới
+        Product savedProduct = productRepository.save(product);
+
+        // 4. Map dữ liệu vào bảng ProductDetail
+        try {
+            String vitaminsJson = request.getVitamins() != null ? objectMapper.writeValueAsString(request.getVitamins()) : "{}";
+            String mineralsJson = request.getMinerals() != null ? objectMapper.writeValueAsString(request.getMinerals()) : "{}";
+
+            ProductDetail detail = new ProductDetail();
+            detail.setProductId(savedProduct.getId()); // Khóa chính của bảng Detail
+
+            detail.setOrigin(request.getOrigin());
+            detail.setIngredients(request.getIngredients());
+            detail.setUsage(request.getUsage());
+            detail.setStorage(request.getStorage());
+            detail.setOtherNutrients(request.getOtherNutrients());
+
+            // Map vĩ lượng
+            detail.setCalories(request.getCalories());
+            detail.setProtein(request.getProtein());
+            detail.setFat(request.getFat());
+            detail.setCarbohydrates(request.getCarbohydrates());
+            detail.setSugar(request.getSugar());
+
+            // Map vi lượng JSON
+            detail.setVitamins(vitaminsJson);
+            detail.setMinerals(mineralsJson);
+
+            productDetailRepository.save(detail);
+
+        } catch (Exception e) {
+            log.error("Lỗi parse JSON thành phần dinh dưỡng", e);
+            throw new IllegalArgumentException("Dữ liệu Vitamin/Khoáng chất không hợp lệ");
+        }
+    }
+}
