@@ -74,9 +74,7 @@ export function CartProvider({ children }) {
     for (const item of cartData) {
       await addToCart(
         {
-          variant_id: item.variant_id,
-          batch_id: item.batch_id,
-          is_checked: item.is_checked ?? false,
+          product_id: item.product_id,
         },
         item.quantity
       );
@@ -93,24 +91,17 @@ export function CartProvider({ children }) {
 
       const existingItem = cart.find(
         (i) =>
-          i.variant_id === product.variant_id &&
-          (i.batch_id ?? null) === (product.batch_id ?? null)
+          i.product_id === product.product_id
       );
 
       if (existingItem) {
         existingItem.quantity += quantity;
       } else {
         cart.push({
-          variant_id: product.variant_id,
           product_id: product.product_id,
           product_name: product.product_name,
-          image_url: product.image_url,
           price: product.price,
           quantity,
-          is_checked: false,
-          volume: product.volume,
-          packaging_type: product.packaging_type,
-          batch_id: product.batch_id,
         });
       }
 
@@ -128,10 +119,8 @@ export function CartProvider({ children }) {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          variant_id: product.variant_id,
-          batch_id: product.batch_id,
-          quantity,
-          is_checked: false,
+          product_id: product.product_id,
+          quantity
         }),
       });
 
@@ -142,12 +131,12 @@ export function CartProvider({ children }) {
     }
   };
 
-  const removeFromCart = async (variant_id, batch_id) => {
+  const removeFromCart = async (product_id, batch_id) => {
     if (!token) {
       let cart = JSON.parse(localStorage.getItem("cart")) || [];
       cart = cart.filter(
         (item) =>
-          !(item.variant_id === variant_id && item.batch_id === batch_id)
+          !(item.product_id === product_id)
       );
       localStorage.setItem("cart", JSON.stringify(cart));
       setCartItems(cart);
@@ -161,7 +150,7 @@ export function CartProvider({ children }) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ variant_id, batch_id }),
+        body: JSON.stringify({ product_id}),
       });
 
       if (!res.ok) throw new Error("Không thể xóa sản phẩm");
@@ -169,7 +158,7 @@ export function CartProvider({ children }) {
       setCartItems((prev) =>
         prev.filter(
           (item) =>
-            !(item.variant_id === variant_id && item.batch_id === batch_id)
+            !(item.product_id === product_id)
         )
       );
     } catch (err) {
@@ -177,11 +166,11 @@ export function CartProvider({ children }) {
     }
   };
 
-  const updateQuantity = async (variant_id, batch_id, quantity) => {
+  const updateQuantity = async (product_id, quantity) => {
     if (!token) {
       let cart = JSON.parse(localStorage.getItem("cart")) || [];
       const item = cart.find(
-        (i) => i.variant_id === variant_id && i.batch_id === batch_id
+        (i) => i.product_id === product_id 
       );
       if (item) item.quantity = quantity;
 
@@ -197,14 +186,14 @@ export function CartProvider({ children }) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ variant_id, batch_id, quantity }),
+        body: JSON.stringify({ product_id, quantity }),
       });
 
       if (!res.ok) throw new Error("Không thể cập nhật số lượng");
 
       setCartItems((prev) =>
         prev.map((item) =>
-          item.variant_id === variant_id && item.batch_id === batch_id
+          item.product_id === product_id 
             ? { ...item, quantity }
             : item
         )
@@ -214,19 +203,19 @@ export function CartProvider({ children }) {
     }
   };
 
-  const increase = (variant_id, batch_id) => {
+  const increase = (product_id) => {
     const item = cartItems.find(
-      (p) => p.variant_id === variant_id && p.batch_id === batch_id
+      (p) => p.product_id === product_id 
     );
-    if (item) updateQuantity(variant_id, batch_id, item.quantity + 1);
+    if (item) updateQuantity(product_id, item.quantity + 1);
   };
 
-  const decrease = (variant_id, batch_id) => {
+  const decrease = (product_id) => {
     const item = cartItems.find(
-      (p) => p.variant_id === variant_id && p.batch_id === batch_id
+      (p) => p.product_id === product_id 
     );
     if (item && item.quantity > 1)
-      updateQuantity(variant_id, batch_id, item.quantity - 1);
+      updateQuantity(product_id, item.quantity - 1);
   };
 
   // ================== 7. Provider xuất giá trị ==================

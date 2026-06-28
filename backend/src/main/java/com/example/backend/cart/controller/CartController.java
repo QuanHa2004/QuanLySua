@@ -1,0 +1,87 @@
+package com.example.backend.cart.controller;
+
+import com.example.backend.cart.dto.request.CartRequest;
+import com.example.backend.cart.dto.response.CartResponse;
+import com.example.backend.cart.service.CartService;
+import com.example.backend.product.dto.request.AddProductRequest;
+import com.example.backend.product.dto.response.AdminProductResponse;
+import com.example.backend.product.service.ProductService;
+import com.example.backend.user.UserInternalService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/carts")
+@RequiredArgsConstructor
+public class CartController {
+
+    private final CartService cartService;
+    private final UserInternalService userInternalService;
+
+    // Hàm tiện ích để lấy ID người dùng từ Token (Tuỳ thuộc vào cách bạn config JWT)
+    private Integer getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+
+        // 2. Gọi sang module User để lấy ID thực sự
+        return userInternalService.getUserIdByEmail(email);
+    }
+
+    // API GET: http://localhost:8080/carts/current_user
+    @GetMapping("/current_user")
+    public ResponseEntity<?> getMyCart() {
+        try {
+            Integer userId = getCurrentUserId();
+            List<CartResponse> items = cartService.getCartItems(userId);
+            // Trả về format { "items": [...] } khớp với FE
+            return ResponseEntity.ok(Map.of("items", items));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // API POST: http://localhost:8080/carts/add
+    @PostMapping("/add")
+    public ResponseEntity<?> addToCart(@RequestBody CartRequest request) {
+        try {
+            Integer userId = getCurrentUserId();
+            cartService.addToCart(userId, request);
+            return ResponseEntity.ok(Map.of("message", "Thêm vào giỏ thành công"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // API PUT: http://localhost:8080/carts/update
+    @PutMapping("/update")
+    public ResponseEntity<?> updateQuantity(@RequestBody CartRequest request) {
+        try {
+            Integer userId = getCurrentUserId();
+            cartService.updateQuantity(userId, request);
+            return ResponseEntity.ok(Map.of("message", "Cập nhật thành công"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // API DELETE: http://localhost:8080/carts/remove
+    @DeleteMapping("/remove")
+    public ResponseEntity<?> removeFromCart(@RequestBody CartRequest request) {
+        try {
+            Integer userId = getCurrentUserId();
+            cartService.removeFromCart(userId, request);
+            return ResponseEntity.ok(Map.of("message", "Xóa thành công"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+}
