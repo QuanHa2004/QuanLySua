@@ -12,10 +12,20 @@ export default function OrderList() {
     const [rows, setRows] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
+
+    const token = localStorage.getItem("access_token");
+
+
+
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await fetch("http://localhost:8080/admin/orders");
+                const res = await fetch("http://localhost:8080/admin/orders",{
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`
+                    }
+                });
                 if (!res.ok) throw new Error();
                 const json = await res.json();
                 setRows(Array.isArray(json.data) ? json.data : []);
