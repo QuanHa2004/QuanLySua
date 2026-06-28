@@ -131,7 +131,7 @@ export function CartProvider({ children }) {
     }
   };
 
-  const removeFromCart = async (product_id, batch_id) => {
+  const removeFromCart = async (product_id) => {
     if (!token) {
       let cart = JSON.parse(localStorage.getItem("cart")) || [];
       cart = cart.filter(
