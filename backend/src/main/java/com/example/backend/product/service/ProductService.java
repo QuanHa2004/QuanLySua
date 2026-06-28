@@ -1,7 +1,9 @@
 package com.example.backend.product.service;
 
 import com.example.backend.product.dto.request.AddProductRequest;
+import com.example.backend.product.dto.request.ProductFilterRequest;
 import com.example.backend.product.dto.response.AdminProductResponse;
+import com.example.backend.product.dto.response.ProductFilterResponse;
 import com.example.backend.product.entity.Category;
 import com.example.backend.product.entity.Product;
 import com.example.backend.product.entity.ProductDetail;
@@ -16,6 +18,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -121,5 +124,33 @@ public class ProductService {
             log.error("Lỗi parse JSON thành phần dinh dưỡng", e);
             throw new IllegalArgumentException("Dữ liệu Vitamin/Khoáng chất không hợp lệ");
         }
+    }
+
+    public List<ProductFilterResponse> filterProducts(ProductFilterRequest request) {
+        List<Product> products;
+
+        // 1. Kiểm tra điều kiện lọc
+        if (request.getCategoryId() == null) {
+            products = productRepository.findAll();
+        } else {
+            products = productRepository.findByCategoryId(request.getCategoryId());
+        }
+
+        // 2. Map dữ liệu sang DTO
+        return products.stream().map(p -> {
+
+            // Lấy tên danh mục một cách an toàn (tránh NullPointerException)
+            String catName = (p.getCategory() != null) ? p.getCategory().getName() : "Chưa phân loại";
+
+            return ProductFilterResponse.builder()
+                    .productId(p.getId())
+                    .productName(p.getName())
+                    .categoryName(catName)
+                    .price(p.getPrice())
+                    .imageUrl(p.getImageUrl())
+                    .quantity(p.getQuantity())
+
+                    .build();
+        }).collect(Collectors.toList());
     }
 }

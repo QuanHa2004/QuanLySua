@@ -21,43 +21,23 @@ export default function ProductOption() {
 
   // --- STATE DỮ LIỆU ---
   const [categoriesList, setCategoryList] = useState([]);
-  const [brandsList, setBrandsList] = useState([]);
-  const [volumeList, setVolumeList] = useState([]);
   const [products, setProducts] = useState([]);
-
-  // --- STATE BỘ LỌC ---
-  const [selectedBrand, setSelectedBrand] = useState(null);
-  const [selectedVolume, setSelectedVolume] = useState(null);
 
   // --- STATE GIAO DIỆN ---
   const [isCategoryOpen, setIsCategoryOpen] = useState(true);
-  const [isBrandOpen, setIsBrandOpen] = useState(true);
-  const [isVolumeOpen, setIsVolumeOpen] = useState(true);
 
   const searchResult = location.state?.result || null;
 
   // --- FETCH DATA ---
   useEffect(() => {
-    fetch("http://localhost:8080/admin/categories")
+    fetch("http://localhost:8080/customer/categories")
       .then(res => res.json())
       .then(data => setCategoryList(Array.isArray(data.data) ? data.data : []));
   }, []);
 
-  useEffect(() => {
-    fetch("http://localhost:8080/brands")
-      .then(res => res.json())
-      .then(data => setBrandsList(Array.isArray(data.data) ? data.data : []));
-  }, []);
 
   useEffect(() => {
-    fetch("http://localhost:8080/volumes")
-      .then(res => res.json())
-      .then(data => setVolumeList(Array.isArray(data.data) ? data.data : []))
-      .catch(err => console.error("Lỗi tải volume:", err));
-  }, []);
-
-  useEffect(() => {
-    if (searchResult && !selectedBrand && !category_id && !selectedVolume) {
+    if (searchResult && !category_id) {
       setProducts(searchResult);
       return;
     }
@@ -65,12 +45,10 @@ export default function ProductOption() {
     const fetchFilteredProducts = async () => {
       try {
         const payload = {
-          category_id: category_id ? parseInt(category_id) : null,
-          brand_name: selectedBrand,
-          volume: selectedVolume
+          category_id: category_id ? parseInt(category_id) : null
         };
 
-        const res = await fetch("http://localhost:8080/products/filter", {
+        const res = await fetch("http://localhost:8080/customer/products/filter", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -85,10 +63,7 @@ export default function ProductOption() {
       }
     };
     fetchFilteredProducts();
-  }, [category_id, selectedBrand, selectedVolume, searchResult]);
-
-  console.log(products);
-
+  }, [category_id, searchResult]);
 
   // --- HANDLERS ---
   const handleClick = (product) => {
@@ -98,13 +73,6 @@ export default function ProductOption() {
     // 2. Tạo đối tượng chứa tham số
     const params = new URLSearchParams();
 
-    // 3. Nếu sản phẩm click vào có thông tin volume/pack thì thêm vào params
-    if (product.volume) {
-      params.append("volume", product.volume);
-    }
-    if (product.packaging_type) {
-      params.append("pack", product.packaging_type);
-    }
 
     // 4. Nếu có params thì nối vào URL
     const queryString = params.toString();
@@ -112,35 +80,19 @@ export default function ProductOption() {
       targetUrl += `?${queryString}`;
     }
 
-    // Kết quả sẽ dạng: /product-details/15?volume=180ml&pack=Lốc%204%20hộp
     navigate(targetUrl);
   };
 
   const clickCategory = (id) => {
-    setSelectedBrand(null);
-    setSelectedVolume(null);
     if (id === "all") navigate("/products");
     else navigate(`/categories/${id}/products`);
   };
 
-  const handleBrandChange = (brandName) => {
-    setSelectedBrand(selectedBrand === brandName ? null : brandName);
-  };
-
-  const handleVolumeChange = (vol) => {
-    setSelectedVolume(selectedVolume === vol ? null : vol);
-  };
-
   const handleAddToCart = async (e, productItem) => {
-    e.stopPropagation(); 
+    e.stopPropagation();
 
-    if (!productItem.stock_quantity || productItem.stock_quantity <= 0) {
+    if (!productItem.quantity || productItem.quantity <= 0) {
       alert("Sản phẩm tạm hết hàng!");
-      return;
-    }
-
-    if (!productItem.batch_id || productItem.batch_quantity <= 0) {
-      alert("Lô hàng hiện tại không khả dụng, vui lòng thử lại sau!");
       return;
     }
 
@@ -149,13 +101,8 @@ export default function ProductOption() {
         {
           product_id: productItem.product_id,
           product_name: productItem.product_name,
-          variant_id: productItem.variant_id,
-          volume: productItem.volume,
-          packaging_type: productItem.packaging_type,
           price: productItem.price,
-          image_url: productItem.image_url,
-          batch_id: productItem.batch_id, 
-          max_stock: productItem.batch_quantity 
+          image_url: productItem.image_url
         },
         1
       );
@@ -205,55 +152,14 @@ export default function ProductOption() {
                 </div>
               )}
             </div>
-
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="flex justify-between items-center p-4 cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-100" onClick={() => setIsBrandOpen(!isBrandOpen)}>
-                <h3 className="font-bold text-[#1a3c7e]">Thương hiệu</h3>
-                {isBrandOpen ? <ChevronUp /> : <ChevronDown />}
-              </div>
-              {isBrandOpen && (
-                <div className="p-4">
-                  {brandsList.length > 0 ? (
-                    <ul className="space-y-3">
-                      {brandsList.map((brand, index) => (
-                        <li key={index} className="flex items-center">
-                          <input type="checkbox" id={`brand-${index}`} checked={selectedBrand === brand.brand_name} onChange={() => handleBrandChange(brand.brand_name)} className="w-4 h-4 text-[#1a3c7e] border-gray-300 rounded focus:ring-[#1a3c7e] cursor-pointer" />
-                          <label htmlFor={`brand-${index}`} className="ml-2 text-sm text-gray-600 cursor-pointer hover:text-[#1a3c7e]">{brand.brand_name}</label>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (<p className="text-sm text-gray-400 italic">Chưa có thương hiệu</p>)}
-                </div>
-              )}
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="flex justify-between items-center p-4 cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-100" onClick={() => setIsVolumeOpen(!isVolumeOpen)}>
-                <h3 className="font-bold text-[#1a3c7e]">Dung tích</h3>
-                {isVolumeOpen ? <ChevronUp /> : <ChevronDown />}
-              </div>
-              {isVolumeOpen && (
-                <div className="p-4">
-                  {volumeList.length > 0 ? (
-                    <ul className="space-y-3">
-                      {volumeList.map((v, index) => (
-                        <li key={index} className="flex items-center">
-                          <input type="checkbox" id={`vol-${index}`} checked={selectedVolume === v.volume} onChange={() => handleVolumeChange(v.volume)} className="w-4 h-4 text-[#1a3c7e] border-gray-300 rounded focus:ring-[#1a3c7e] cursor-pointer" />
-                          <label htmlFor={`vol-${index}`} className="ml-2 text-sm text-gray-600 cursor-pointer hover:text-[#1a3c7e]">{v.volume}</label>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (<p className="text-sm text-gray-400 italic">Chưa có dung tích</p>)}
-                </div>
-              )}
-            </div>
           </div>
+
 
           <div className="flex-1">
             {products.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {products.filter((product) => product.stock_quantity > 0).map((product) => (
-                  <div key={product.variant_id || product.product_id} className="group flex flex-col bg-white hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300 rounded-xl overflow-hidden cursor-pointer border border-transparent hover:border-blue-100 h-full relative" onClick={() => handleClick(product)}>
+                {products.filter((product) => product.quantity > 0).map((product) => (
+                  <div key={product.product_id} className="group flex flex-col bg-white hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300 rounded-xl overflow-hidden cursor-pointer border border-transparent hover:border-blue-100 h-full relative" onClick={() => handleClick(product)}>
                     {/* Hình ảnh */}
                     <div className="relative pt-[100%] overflow-hidden p-4">
                       <div className="absolute inset-0 m-4 bg-contain bg-center bg-no-repeat transition-transform duration-500 group-hover:scale-105" style={{ backgroundImage: `url("${product.image_url}")` }}></div>
@@ -264,11 +170,6 @@ export default function ProductOption() {
                       <div className="text-xs font-semibold text-gray-400 uppercase mb-1">{product.category_name}</div>
                       <h3 className="text-[#1a3c7e] text-base md:text-lg font-bold line-clamp-2 mb-2 group-hover:text-[#4096ff] transition-colors">{product.product_name}</h3>
 
-                      {/* TAGS */}
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {product.volume && (<span className="bg-[#eef4ff] text-[#1a3c7e] text-xs font-bold px-2 py-1 rounded">{product.volume}</span>)}
-                        {product.packaging_type && (<span className="bg-[#eef4ff] text-[#1a3c7e] text-xs font-bold px-2 py-1 rounded">{product.packaging_type}</span>)}
-                      </div>
 
                       {/* Giá & Nút giỏ hàng */}
                       <div className="mt-auto flex items-end justify-between border-t border-gray-100 pt-3">

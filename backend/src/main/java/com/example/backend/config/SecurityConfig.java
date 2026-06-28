@@ -43,7 +43,7 @@ public class SecurityConfig {
                 // 3. Phân quyền các Endpoints
                 .authorizeHttpRequests(auth -> auth
                         // Cấu hình dựa trên API Frontend thực tế của bạn
-                        .requestMatchers("/register", "/login", "/auth/**").permitAll()
+                        .requestMatchers("/register", "/login", "/auth/**", "/customer/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("Admin")
                         .anyRequest().authenticated()
                 )
