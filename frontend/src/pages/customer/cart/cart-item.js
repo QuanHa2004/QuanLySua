@@ -1,15 +1,82 @@
+import { useEffect, useState } from "react";
 import useCart from "../../../context/cart-context";
 
 export default function CartItem() {
   const {
     cartItems,
+    setCartItems,
     removeFromCart,
     updateQuantity,
     increase,
     decrease,
+    fetchCartItems,
   } = useCart();
 
-  // Nếu giỏ hàng trống, có thể render một thông báo (tùy chọn)
+  const token = localStorage.getItem("access_token");
+  const [checkAll, setCheckAll] = useState(false);
+
+  // ================= 1. Xử lý logic Checkbox =================
+
+  // Theo dõi giỏ hàng: Nếu tất cả đều được chọn thì tick vào ô "Chọn tất cả"
+  useEffect(() => {
+    setCheckAll(cartItems.length > 0 && cartItems.every(item => item.is_checked));
+  }, [cartItems]);
+
+  // Gọi API (hoặc LocalStorage) để lưu trạng thái is_checked
+  const updateItemStatus = async (product_id, is_checked) => {
+    try {
+      if (!token) {
+        let cart = JSON.parse(localStorage.getItem("cart")) || [];
+        cart = cart.map(item =>
+          item.product_id === product_id ? { ...item, is_checked } : item
+        );
+        localStorage.setItem("cart", JSON.stringify(cart));
+        return;
+      }
+
+      const res = await fetch(`http://localhost:8080/customer/carts/${product_id}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ is_checked }),
+      });
+
+      if (!res.ok) throw new Error("Lỗi cập nhật trạng thái sản phẩm");
+    } catch (err) {
+      console.error(err);
+      fetchCartItems(); // Rollback lại data từ server nếu gọi API lỗi
+    }
+  };
+
+  // Click ô "Chọn tất cả"
+  const handleCheckboxAll = () => {
+    const newIsChecked = !cartItems.every(item => item.is_checked);
+
+    // Cập nhật giao diện ngay lập tức
+    const updated = cartItems.map(item => ({ ...item, is_checked: newIsChecked }));
+    setCartItems(updated);
+
+    // Lưu trạng thái
+    updated.forEach(item => updateItemStatus(item.product_id, newIsChecked));
+  };
+
+  // Click ô checkbox của từng sản phẩm
+  const handleCheckboxChange = (product_id, current_status) => {
+    const newIsChecked = !current_status;
+
+    setCartItems(prev =>
+      prev.map(item =>
+        item.product_id === product_id ? { ...item, is_checked: newIsChecked } : item
+      )
+    );
+
+    updateItemStatus(product_id, newIsChecked);
+  };
+
+  // ================= 2. Giao diện =================
+
   if (!cartItems || cartItems.length === 0) {
     return (
       <div className="p-8 text-center bg-white rounded-xl border border-gray-100 text-gray-500">
@@ -20,23 +87,51 @@ export default function CartItem() {
 
   return (
     <>
-      {/* --- HEADER GIAO DIỆN (Đã bỏ cột Checkbox, chia lại tỉ lệ Grid) --- */}
+      {/* --- HEADER --- */}
       <div className="hidden md:grid grid-cols-12 gap-6 px-6 py-4 border-b border-gray-200 bg-[#f8f9fa] text-sm font-bold text-[#1a3c7e] uppercase tracking-wide rounded-t-xl">
-        <div className="col-span-6">Sản phẩm</div>
+        <div className="col-span-1 flex justify-center items-center">
+          <input
+            type="checkbox"
+            className="w-5 h-5 accent-[#1a3c7e] cursor-pointer rounded border-gray-300"
+            checked={checkAll}
+            onChange={handleCheckboxAll}
+          />
+        </div>
+        <div className="col-span-5">Sản phẩm</div>
         <div className="col-span-2 text-center">Đơn giá</div>
         <div className="col-span-2 text-center">Số lượng</div>
         <div className="col-span-2 text-right">Thành tiền</div>
       </div>
 
-      {/* --- DANH SÁCH SẢN PHẨM --- */}
+      {/* --- DANH SÁCH --- */}
       <div className="bg-white rounded-b-xl border border-t-0 border-gray-100">
         {cartItems.map((product) => (
           <div
             key={product.product_id}
             className="group grid grid-cols-1 md:grid-cols-12 items-center gap-4 p-4 md:px-6 md:py-6 border-b border-gray-100 last:border-0 hover:bg-blue-50/30 transition-colors duration-200"
           >
-            {/* 1. Cột Thông tin Sản phẩm */}
-            <div className="col-span-1 md:col-span-6 flex items-start gap-4">
+            {/* Cột Checkbox (Desktop) */}
+            <div className="hidden md:flex col-span-1 justify-center">
+              <input
+                type="checkbox"
+                checked={product.is_checked || false}
+                onChange={() => handleCheckboxChange(product.product_id, product.is_checked)}
+                className="w-5 h-5 accent-[#1a3c7e] cursor-pointer rounded border-gray-300"
+              />
+            </div>
+
+            {/* Cột Thông tin Sản phẩm */}
+            <div className="col-span-1 md:col-span-5 flex items-start gap-4">
+              {/* Checkbox (Mobile) */}
+              <div className="md:hidden flex items-center pr-2 pt-8">
+                <input
+                  type="checkbox"
+                  checked={product.is_checked || false}
+                  onChange={() => handleCheckboxChange(product.product_id, product.is_checked)}
+                  className="w-5 h-5 accent-[#1a3c7e] cursor-pointer"
+                />
+              </div>
+
               <div className="flex flex-col items-center gap-2 shrink-0">
                 <div
                   className="w-20 h-20 md:w-24 md:h-24 bg-center bg-no-repeat bg-contain bg-white border border-gray-100 rounded-lg"
@@ -58,11 +153,10 @@ export default function CartItem() {
                 <p className="text-[#333] font-bold text-base line-clamp-2 hover:text-[#1a3c7e] transition-colors cursor-pointer">
                   {product.product_name}
                 </p>
-                {/* Đã xóa phần hiển thị volume/packaging_type thừa thãi */}
               </div>
             </div>
 
-            {/* 2. Cột Đơn giá */}
+            {/* Cột Đơn giá */}
             <div className="col-span-1 md:col-span-2 text-center">
               <span className="md:hidden text-gray-500 text-sm mr-2">Đơn giá:</span>
               <span className="text-[#333] font-medium">
@@ -70,7 +164,7 @@ export default function CartItem() {
               </span>
             </div>
 
-            {/* 3. Cột Số lượng (Tăng/Giảm) */}
+            {/* Cột Số lượng */}
             <div className="col-span-1 md:col-span-2 flex justify-center">
               <div className="flex items-center border border-gray-300 rounded-lg h-9 bg-white">
                 <button
@@ -95,7 +189,7 @@ export default function CartItem() {
               </div>
             </div>
 
-            {/* 4. Cột Thành tiền */}
+            {/* Cột Thành tiền */}
             <div className="col-span-1 md:col-span-2 flex items-center justify-between md:justify-end">
               <span className="md:hidden text-gray-500 text-sm">Thành tiền:</span>
               <div className="flex items-center gap-4">

@@ -28,7 +28,7 @@ export default function Cart() {
                 return;
             }
 
-            localStorage.setItem("post_login_redirect", "/carts");
+            localStorage.setItem("post_login_redirect", "/customer/carts");
             navigate("/login");
             return;
         }
@@ -56,7 +56,7 @@ export default function Cart() {
             });
 
             if (!res.ok) {
-                localStorage.setItem("post_login_redirect", "/carts");
+                localStorage.setItem("post_login_redirect", "/customer/carts");
                 navigate("/login");
                 return;
             }

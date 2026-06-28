@@ -1,6 +1,7 @@
 package com.example.backend.modules.cart.controller;
 
 import com.example.backend.modules.cart.dto.request.CartRequest;
+import com.example.backend.modules.cart.dto.request.CartStatusRequest;
 import com.example.backend.modules.cart.dto.response.CartResponse;
 import com.example.backend.modules.cart.service.CartService;
 import com.example.backend.modules.user.api.UserInternalService;
@@ -14,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/carts")
+@RequestMapping("/customer/carts")
 @RequiredArgsConstructor
 public class CartController {
 
@@ -76,6 +77,24 @@ public class CartController {
             cartService.removeFromCart(userId, request);
             return ResponseEntity.ok(Map.of("message", "Xóa thành công"));
         } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{productId}/status")
+    public ResponseEntity<?> updateItemStatus(
+            @PathVariable("productId") Integer productId,
+            @RequestBody CartStatusRequest request) {
+        try {
+            // getCurrentUserId() là hàm lấy ID từ Token mà chúng ta đã làm trước đó
+            Integer userId = getCurrentUserId();
+
+            // Gọi service để cập nhật
+            cartService.updateItemStatus(userId, productId, request.getIsChecked());
+
+            return ResponseEntity.ok(Map.of("message", "Cập nhật trạng thái thành công"));
+        } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }

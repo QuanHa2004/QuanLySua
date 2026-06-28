@@ -110,4 +110,21 @@ public class CartService {
                 cartItemRepository.deleteByCartIdAndProductId(cart.getId(), request.getProductId())
         );
     }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void updateItemStatus(Integer userId, Integer productId, Boolean isChecked) {
+        // 1. Tìm giỏ hàng của người dùng hiện tại
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Giỏ hàng không tồn tại"));
+
+        // 2. Tìm sản phẩm cụ thể trong giỏ hàng đó
+        CartItem item = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
+                .orElseThrow(() -> new RuntimeException("Sản phẩm không có trong giỏ hàng"));
+
+        // 3. Cập nhật trạng thái check
+        item.setIsChecked(isChecked);
+
+        // 4. Lưu lại xuống database
+        cartItemRepository.save(item);
+    }
 }

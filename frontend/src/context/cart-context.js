@@ -47,7 +47,7 @@ export function CartProvider({ children }) {
     if (!token) return;
 
     try {
-      const res = await fetch("http://localhost:8080/carts/current_user", {
+      const res = await fetch("http://localhost:8080/customer/carts/current_user", {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -112,7 +112,7 @@ export function CartProvider({ children }) {
 
     // USER ĐÃ LOGIN → BACKEND
     try {
-      const res = await fetch("http://localhost:8080/carts/add", {
+      const res = await fetch("http://localhost:8080/customer/carts/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -144,7 +144,7 @@ export function CartProvider({ children }) {
     }
 
     try {
-      const res = await fetch("http://localhost:8080/carts/remove", {
+      const res = await fetch("http://localhost:8080/customer/carts/remove", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -180,7 +180,7 @@ export function CartProvider({ children }) {
     }
 
     try {
-      const res = await fetch("http://localhost:8080/carts/update", {
+      const res = await fetch("http://localhost:8080/customer/carts/update", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
