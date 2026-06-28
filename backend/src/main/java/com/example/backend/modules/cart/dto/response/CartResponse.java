@@ -23,4 +23,7 @@ public class CartResponse {
 
     @JsonProperty("quantity")
     private Integer quantity;
+
+    @JsonProperty("is_checked")
+    private Boolean isChecked;
 }

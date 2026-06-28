@@ -57,6 +57,7 @@ public class CartService {
                     .price(product.getPrice())
                     .imageUrl(product.getImageUrl())
                     .quantity(item.getQuantity())
+                    .isChecked(item.getIsChecked())
                     .build();
 
         }).collect(Collectors.toList());
@@ -126,5 +127,15 @@ public class CartService {
 
         // 4. Lưu lại xuống database
         cartItemRepository.save(item);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void updateAllItemStatus(Integer userId, Boolean isChecked) {
+        // Tìm giỏ hàng của người dùng hiện tại
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Giỏ hàng không tồn tại"));
+
+        // Cập nhật toàn bộ item thuộc giỏ hàng này
+        cartItemRepository.updateStatusByCartId(cart.getId(), isChecked);
     }
 }

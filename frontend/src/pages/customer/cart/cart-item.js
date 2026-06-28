@@ -50,16 +50,36 @@ export default function CartItem() {
     }
   };
 
-  // Click ô "Chọn tất cả"
-  const handleCheckboxAll = () => {
+  // Hàm xử lý checkbox "chọn tất cả"
+  const handleCheckboxAll = async () => {
     const newIsChecked = !cartItems.every(item => item.is_checked);
 
-    // Cập nhật giao diện ngay lập tức
+    // 1. Cập nhật giao diện ngay lập tức
     const updated = cartItems.map(item => ({ ...item, is_checked: newIsChecked }));
     setCartItems(updated);
 
-    // Lưu trạng thái
-    updated.forEach(item => updateItemStatus(item.product_id, newIsChecked));
+    // 2. Lưu trạng thái
+    if (!token) {
+      // Khách vãng lai -> Lưu đè mảng mới vào localStorage là xong
+      localStorage.setItem("cart", JSON.stringify(updated));
+    } else {
+      // User đã login -> Gọi 1 API duy nhất để báo cho server
+      try {
+        const res = await fetch("http://localhost:8080/customer/carts/status/all", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ is_checked: newIsChecked }),
+        });
+
+        if (!res.ok) throw new Error("Lỗi cập nhật tất cả trạng thái");
+      } catch (err) {
+        console.error(err);
+        fetchCartItems(); // Rollback UI nếu có lỗi mạng
+      }
+    }
   };
 
   // Click ô checkbox của từng sản phẩm
@@ -198,7 +218,7 @@ export default function CartItem() {
                 </span>
               </div>
             </div>
-            
+
           </div>
         ))}
       </div>

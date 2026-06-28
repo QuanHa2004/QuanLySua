@@ -98,4 +98,18 @@ public class CartController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    @PutMapping("/status/all")
+    public ResponseEntity<?> updateAllItemStatus(@RequestBody CartStatusRequest request) {
+        try {
+            Integer userId = getCurrentUserId();
+
+            cartService.updateAllItemStatus(userId, request.getIsChecked());
+
+            return ResponseEntity.ok(Map.of("message", "Cập nhật tất cả trạng thái thành công"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }
