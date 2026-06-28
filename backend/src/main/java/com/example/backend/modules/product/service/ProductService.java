@@ -173,6 +173,7 @@ public class ProductService {
                     .price(p.getPrice())
                     .imageUrl(p.getImageUrl())
                     .quantity(p.getQuantity())
+                    .expirationDate(p.getExpirationDate())
 
                     .build();
         }).collect(Collectors.toList());
@@ -197,6 +198,7 @@ public class ProductService {
                 .price(product.getPrice())
                 .imageUrl(product.getImageUrl())
                 .quantity(product.getQuantity())
+                .expirationDate(product.getExpirationDate())
                 .categoryName(categoryName);
 
         // Nếu sản phẩm có nhập thông tin dinh dưỡng thì đắp thêm vào

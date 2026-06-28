@@ -119,6 +119,12 @@ export default function ProductDetail() {
                                         {product.description}
                                     </p>
                                 </div>
+
+                                <div className="border-b border-gray-100 pb-6 mb-6">
+                                    <p className="text-gray-600 text-base leading-relaxed">
+                                        HSD: {product.expiration_date}
+                                    </p>
+                                </div>
                                 
                                 {/* --- ĐÃ BỔ SUNG PHẦN GIÁ VÀ GIỎ HÀNG BỊ THIẾU --- */}
                                 <div className="mb-8">

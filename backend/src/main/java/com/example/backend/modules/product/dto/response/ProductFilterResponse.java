@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Data
 @Builder
@@ -26,4 +27,7 @@ public class ProductFilterResponse {
 
     @JsonProperty("quantity")
     private Integer quantity;
+
+    @JsonProperty("expiration_date")
+    private LocalDate expirationDate;
 }

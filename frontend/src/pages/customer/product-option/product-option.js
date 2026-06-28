@@ -169,6 +169,8 @@ export default function ProductOption() {
                     <div className="flex flex-col flex-grow p-4">
                       <div className="text-xs font-semibold text-gray-400 uppercase mb-1">{product.category_name}</div>
                       <h3 className="text-[#1a3c7e] text-base md:text-lg font-bold line-clamp-2 mb-2 group-hover:text-[#4096ff] transition-colors">{product.product_name}</h3>
+                      <h3 className="text-gray-400 text-base md:text-lg font-bold line-clamp-2 mb-2 group-hover:text-gray-600 transition-colors">HSD: {product.expiration_date}</h3>
+
 
 
                       {/* Giá & Nút giỏ hàng */}
