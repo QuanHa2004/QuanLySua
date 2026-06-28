@@ -1,8 +1,10 @@
 package com.example.backend.product.service;
 
+import com.example.backend.product.ProductResponse;
 import com.example.backend.product.dto.request.AddProductRequest;
 import com.example.backend.product.dto.request.ProductFilterRequest;
 import com.example.backend.product.dto.response.AdminProductResponse;
+import com.example.backend.product.dto.response.ProductDetailResponse;
 import com.example.backend.product.dto.response.ProductFilterResponse;
 import com.example.backend.product.entity.Category;
 import com.example.backend.product.entity.Product;
@@ -59,6 +61,28 @@ public class ProductService {
                     .variants(variantList) // Gắn danh sách biến thể vào sản phẩm
                     .build();
         }).toList();
+    }
+
+
+    public List<ProductResponse> getAllProducts() {
+        // Lấy tất cả sản phẩm từ Database
+        List<Product> products = productRepository.findAll();
+
+        return products.stream()
+                // Lọc bỏ những sản phẩm đã bị xóa mềm (isDeleted = true)
+                .filter(p -> p.getIsDeleted() == null || !p.getIsDeleted())
+                .map(p -> {
+                    // Lấy tên danh mục an toàn
+                    String catName = p.getCategory() != null ? p.getCategory().getName() : "Chưa phân loại";
+
+                    return ProductResponse.builder()
+                            .productId(p.getId())
+                            .productName(p.getName())
+                            .price(p.getPrice())
+                            .imageUrl(p.getImageUrl())
+                            // Các trường này có thể trả về null hoặc giá trị mặc định nếu Frontend không cần
+                            .build();
+                }).collect(Collectors.toList());
     }
 
 
@@ -152,5 +176,42 @@ public class ProductService {
 
                     .build();
         }).collect(Collectors.toList());
+    }
+
+
+    public ProductDetailResponse getProductDetail(Integer productId) {
+        // 1. Tìm sản phẩm trong Database
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm với ID: " + productId));
+
+        // Lấy tên danh mục
+        String categoryName = product.getCategory() != null ? product.getCategory().getName() : "Khác";
+
+        ProductDetail detail = productDetailRepository.findById(productId).orElse(null);
+
+        // 2. Build DTO trả về cho Frontend
+        var responseBuilder = ProductDetailResponse.builder()
+                .productId(product.getId())
+                .productName(product.getName())
+                .description(product.getDescription())
+                .price(product.getPrice())
+                .imageUrl(product.getImageUrl())
+                .quantity(product.getQuantity())
+                .categoryName(categoryName);
+
+        // Nếu sản phẩm có nhập thông tin dinh dưỡng thì đắp thêm vào
+        if (detail != null) {
+            responseBuilder
+                    .ingredients(detail.getIngredients())
+                    .usageInstruction(detail.getUsage())
+                    .calories(detail.getCalories())
+                    .protein(detail.getProtein())
+                    .fat(detail.getFat())
+                    .carbs(detail.getCarbohydrates())
+                    .vitamins(detail.getVitamins())
+                    .minerals(detail.getMinerals());
+        }
+
+        return responseBuilder.build();
     }
 }

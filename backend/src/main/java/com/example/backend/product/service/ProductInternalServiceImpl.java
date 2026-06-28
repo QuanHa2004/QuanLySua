@@ -22,8 +22,9 @@ public class ProductInternalServiceImpl implements ProductInternalService {
 
         return ProductResponse.builder()
                 .productId(product.getId())
-                .name(product.getName())
+                .productName(product.getName())
                 .price(product.getPrice())
+                .imageUrl(product.getImageUrl())
                 .build();
     }
 }

@@ -7,7 +7,6 @@ import com.example.backend.cart.entity.CartItem;
 import com.example.backend.cart.repo.CartItemRepository;
 import com.example.backend.cart.repo.CartRepository;
 import com.example.backend.product.ProductInternalService;
-import com.example.backend.product.service.ProductInternalServiceImpl;
 import com.example.backend.product.ProductResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,8 +53,9 @@ public class CartService {
 
             return CartResponse.builder()
                     .productId(product.getProductId())
-                    .productName(product.getName())
+                    .productName(product.getProductName())
                     .price(product.getPrice())
+                    .imageUrl(product.getImageUrl())
                     .quantity(item.getQuantity())
                     .build();
 

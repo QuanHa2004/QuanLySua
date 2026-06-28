@@ -18,5 +18,9 @@ public class CartResponse {
     @JsonProperty("price")
     private BigDecimal price;
 
+    @JsonProperty("image_url")
+    private String imageUrl;
+
+    @JsonProperty("quantity")
     private Integer quantity;
 }

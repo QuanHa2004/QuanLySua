@@ -1,9 +1,5 @@
 package com.example.backend.user.service;
 
-import com.example.backend.product.ProductInternalService;
-import com.example.backend.product.ProductResponse;
-import com.example.backend.product.entity.Product;
-import com.example.backend.product.repo.ProductRepository;
 import com.example.backend.user.UserInternalService;
 import com.example.backend.user.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
