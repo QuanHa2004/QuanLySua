@@ -17,16 +17,13 @@ public interface CartItemRepository extends JpaRepository<CartItem, Integer> {
 
     void deleteByCartIdAndProductId(Integer cartId, Integer productId);
 
-
     @Modifying
     @Query("UPDATE CartItem c SET c.isChecked = :isChecked WHERE c.cartId = :cartId")
     void updateStatusByCartId(@Param("cartId") Integer cartId, @Param("isChecked") Boolean isChecked);
 
-
     @Modifying
     @Query("DELETE FROM CartItem c WHERE c.cartId = :cartId AND c.isChecked = true")
     void deleteCheckedItemsByCartId(@Param("cartId") Integer cartId);
-
 
     @Query("SELECT COALESCE(SUM(p.price * c.quantity), 0) " +
             "FROM CartItem c " +

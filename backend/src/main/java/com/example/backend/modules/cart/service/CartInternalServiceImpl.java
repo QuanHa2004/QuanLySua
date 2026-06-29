@@ -17,6 +17,7 @@ public class CartInternalServiceImpl implements CartInternalService {
 
     private final CartItemRepository cartItemRepository;
 
+    @Override
     public BigDecimal calculateTotalCheckedItems(Integer userId){
         return cartItemRepository.calculateTotalCheckedItems(userId);
     }

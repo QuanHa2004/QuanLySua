@@ -11,7 +11,4 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     // Kiểm tra xem Email đã tồn tại trong hệ thống chưa
     boolean existsByEmail(String email);
-
-    // Bạn có thể thêm tìm kiếm theo Google ID nếu làm tính năng Social Login
-    Optional<User> findByGoogleId(String googleId);
 }

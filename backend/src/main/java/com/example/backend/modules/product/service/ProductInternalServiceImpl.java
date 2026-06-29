@@ -16,6 +16,7 @@ public class ProductInternalServiceImpl implements ProductInternalService {
     private final ProductRepository productRepository;
 
     // Hàm này được thiết kế riêng để các module khác (như cart, order) gọi vào
+    @Override
     public ProductResponse getProductSnapshot(Integer productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));

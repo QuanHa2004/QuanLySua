@@ -1,7 +1,7 @@
 package com.example.backend.modules.user.service;
 
 // import các thư viện JWT và Security
-import com.example.backend.modules.user.api.UserRegisteredEvent;
+import com.example.backend.modules.user.event.UserRegisteredEvent;
 import com.example.backend.modules.user.dto.request.LoginRequest;
 import com.example.backend.modules.user.dto.request.RegisterRequest;
 import com.example.backend.modules.user.dto.response.AuthResponse;
@@ -10,6 +10,7 @@ import com.example.backend.modules.user.entity.User;
 import com.example.backend.modules.user.exception.AccountLockedException;
 import com.example.backend.modules.user.repo.RoleRepository;
 import com.example.backend.modules.user.repo.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class AuthService {
 
     private final UserRepository userRepository;
@@ -25,16 +27,6 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService; // Bạn sẽ cần tạo một service để gen Token
     private final ApplicationEventPublisher eventPublisher;
-
-    public AuthService(UserRepository userRepository, RoleRepository roleRepository,
-                       PasswordEncoder passwordEncoder, JwtService jwtService,
-                       ApplicationEventPublisher eventPublisher) {
-        this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtService = jwtService;
-        this.eventPublisher = eventPublisher;
-    }
 
     @Transactional
     public void register(RegisterRequest request) {

@@ -11,6 +11,7 @@ public class UserInternalServiceImpl implements UserInternalService {
 
     private final UserRepository userRepository;
 
+    @Override
     public Integer getUserIdByEmail(String email) {
         return userRepository.findByEmail(email).get().getId();
     }

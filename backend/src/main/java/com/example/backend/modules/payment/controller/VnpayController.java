@@ -1,6 +1,6 @@
 package com.example.backend.modules.payment.controller;
 
-import com.example.backend.modules.payment.event.PaymentSuccessEvent;
+import com.example.backend.modules.payment.event.TransactionEvent;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +34,7 @@ public class VnpayController {
 
         if ("00".equals(vnp_ResponseCode)) {
             // Phát sự kiện để module Order cập nhật trạng thái đơn hàng, module Cart dọn giỏ hàng
-            eventPublisher.publishEvent(new PaymentSuccessEvent(orderId, vnp_TransactionNo));
+            eventPublisher.publishEvent(new TransactionEvent(orderId, vnp_TransactionNo));
 
             redirectUrl += "/success?status=success&order_id=" + orderId;
         } else {
