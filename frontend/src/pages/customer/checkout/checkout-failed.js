@@ -21,53 +21,6 @@ export default function CheckoutFailed() {
         }
     };
 
-    // Xử lý thử thanh toán lại
-    const handleRetryPayment = async () => {
-        if (!orderId) {
-            alert("Không tìm thấy mã đơn hàng để thử lại");
-            navigate('/checkout');
-            return;
-        }
-
-        setLoading(true);
-
-        try {
-            const token = localStorage.getItem('access_token');
-            if (!token) {
-                alert("Vui lòng đăng nhập lại");
-                navigate('/login');
-                return;
-            }
-
-            const response = await fetch('http://localhost:8080/orders/retry', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ order_id: orderId })
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || "Không thể tạo link thanh toán mới");
-            }
-
-            if (data.payment_url) {
-                window.location.href = data.payment_url;
-            } else {
-                alert("Lỗi: Server không trả về link thanh toán.");
-            }
-
-        } catch (err) {
-            console.error(err);
-            alert("Lỗi kết nối: " + err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     return (
         <div className="bg-[#f8f9fa] font-sans text-[#333]">
             <div className="relative flex min-h-screen w-full flex-col">
@@ -112,27 +65,7 @@ export default function CheckoutFailed() {
                         </div>
 
                         <div className="flex flex-col gap-4">
-                            <button
-                                onClick={handleRetryPayment}
-                                disabled={loading}
-                                className={`w-full py-4 rounded-xl font-bold text-lg uppercase tracking-wide shadow-lg transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2
-                  ${loading
-                                        ? 'bg-gray-300 text-white cursor-not-allowed shadow-none'
-                                        : 'bg-gradient-to-r from-[#d32f2f] to-[#ef5350] text-white hover:shadow-red-200'
-                                    }`}
-                            >
-                                {loading ? (
-                                    <>
-                                        <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
-                                        Đang xử lý...
-                                    </>
-                                ) : (
-                                    <>
-                                        <span className="material-symbols-outlined">refresh</span>
-                                        Thử thanh toán lại
-                                    </>
-                                )}
-                            </button>
+                            
 
                             <Link
                                 to="/"

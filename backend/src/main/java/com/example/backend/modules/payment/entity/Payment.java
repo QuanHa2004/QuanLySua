@@ -1,8 +1,9 @@
-package com.example.backend.modules.order.entity;
+package com.example.backend.modules.payment.entity;
 
-import com.example.backend.modules.order.enums.PaymentStatus;
+import com.example.backend.modules.payment.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -19,10 +20,8 @@ public class Payment {
     @Column(name = "payment_id")
     private Integer id;
 
-    // Cùng module Order
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false)
-    private Order order;
+    @Column(name = "order_id", nullable = false)
+    private Integer orderId;
 
     @Column(name = "payment_method", nullable = false, length = 50)
     private String paymentMethod;

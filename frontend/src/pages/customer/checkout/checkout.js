@@ -4,7 +4,6 @@ import CartSummary from '../../../component/cart-summary';
 import Footer from '../../../component/footer';
 import Header from '../../../component/header';
 import useCart from '../../../context/cart-context';
-import Voucher from './voucher';
 
 export default function Checkout() {
     const navigate = useNavigate();
@@ -49,7 +48,7 @@ export default function Checkout() {
             const data = await res.json();
 
             setCustomerInfo({
-                fullName: data.full_name || '', 
+                fullName: data.full_name || '',
                 phone: data.phone || '',
                 address: data.address || ''
             });
@@ -123,9 +122,12 @@ export default function Checkout() {
 
             const payload = {
                 payment_method: formData.paymentMethod,
+                full_name: customerInfo.fullName,       // Bổ sung tên
+                phone: customerInfo.phone,              // Bổ sung SĐT
+                delivery_address: customerInfo.address  // Bổ sung Địa chỉ
             };
 
-            const response = await fetch('http://localhost:8080/orders/checkout', {
+            const response = await fetch('http://localhost:8080/customer/orders/checkout', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -145,22 +147,21 @@ export default function Checkout() {
             if (!response.ok) {
                 if (response.status === 400 && data.error?.includes('cung cấp đầy đủ')) {
                     alert('Vui lòng cập nhật đầy đủ thông tin trong hồ sơ cá nhân trước khi đặt hàng.');
-                    navigate('/profile');
                     return;
                 }
                 throw new Error(data.error || 'Có lỗi xảy ra khi đặt hàng');
             }
 
-            // Xử lý thành công
+            // ================= XỬ LÝ THÀNH CÔNG =================
             if (data.payment_url) {
-                // Thanh toán VNPAY
-                if (fetchCartItems) fetchCartItems();
+                // 1. Nếu là VNPAY -> Chuyển hướng thẳng sang cổng thanh toán
                 window.location.href = data.payment_url;
             } else {
-                // Thanh toán COD
-                alert('Đặt hàng thành công! Mã đơn: ' + data.order_id);
-                if (fetchCartItems) fetchCartItems();
-                navigate(`/checkout/success?order_id=${data.order_id}`);
+                // 2. Nếu là COD -> Chuyển hướng sang trang báo thành công
+                if (fetchCartItems) fetchCartItems(); // Cập nhật lại số lượng giỏ hàng trên Header
+
+                // THÊM `status=success` ĐỂ KHỚP VỚI TRANG CHECKOUT SUCCESS VỪA VIẾT
+                navigate(`/checkout/success?status=success&order_id=${data.order_id}`);
             }
 
         } catch (err) {
@@ -301,12 +302,6 @@ export default function Checkout() {
                                     </div>
                                 </div>
 
-                                {/* <div className="mt-8 bg-white rounded-xl p-6 border border-[#dbe2e6]">
-                                    <h2 className="text-[#111618] text-[22px] font-bold leading-tight tracking-[-0.015em] mb-6">
-                                        Những voucher đang có
-                                    </h2>
-                                    <Voucher />
-                                </div> */}
                             </div>
 
                             <div className="lg:col-span-1">

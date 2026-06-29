@@ -1,7 +1,7 @@
 package com.example.backend.modules.order.entity;
 
 import com.example.backend.modules.order.enums.OrderStatus;
-import com.example.backend.modules.order.enums.PaymentMethod;
+import com.example.backend.modules.payment.enums.PaymentMethod;
 import jakarta.persistence.*;
 import lombok.*;
 

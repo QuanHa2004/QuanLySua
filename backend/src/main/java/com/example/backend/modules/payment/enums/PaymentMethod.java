@@ -1,4 +1,4 @@
-package com.example.backend.modules.order.enums;
+package com.example.backend.modules.payment.enums;
 
 public enum PaymentMethod {
     COD,            // Thanh toán khi nhận hàng
