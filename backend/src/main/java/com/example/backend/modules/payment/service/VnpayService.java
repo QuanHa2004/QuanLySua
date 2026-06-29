@@ -1,7 +1,7 @@
 package com.example.backend.modules.payment.service;
 
 import com.example.backend.modules.payment.api.PaymentInternalService;
-import com.example.backend.modules.payment.api.PaymentLinkSnapshot;
+import com.example.backend.modules.payment.dto.response.PaymentLinkResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,7 +30,7 @@ public class VnpayService implements PaymentInternalService {
     private String vnpReturnUrl;
 
     @Override
-    public PaymentLinkSnapshot createVNPayUrl(Integer orderId, BigDecimal amount, String ipAddress) {
+    public PaymentLinkResponse createVNPayUrl(Integer orderId, BigDecimal amount, String ipAddress) {
         // VNPay yêu cầu số tiền nhân 100 và đổi thành chuỗi số nguyên
         long totalAmount = amount.multiply(BigDecimal.valueOf(100)).longValue();
 
@@ -89,7 +89,9 @@ public class VnpayService implements PaymentInternalService {
             // 3. Nối chữ ký vào cuối URL
             queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
 
-            return new PaymentLinkSnapshot(vnpUrl + "?" + queryUrl);
+            return PaymentLinkResponse.builder()
+                    .paymentUrl(vnpUrl + "?" + queryUrl)
+                    .build();
         } catch (Exception e) {
             throw new RuntimeException("Lỗi sinh link VNPay", e);
         }

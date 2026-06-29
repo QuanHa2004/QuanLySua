@@ -7,17 +7,10 @@ export default function CartSummary({ showPaymentSection = false }) {
   const selectedItems = cartItems.filter(item => item.is_checked);
 
   // Tính tổng tiền hàng
-  const total_amount = selectedItems.reduce(
+  const total = selectedItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-
-  // Thuế VAT 8%
-  const taxRate = 0.08;
-  const taxes = total_amount * taxRate;
-
-  // Tổng cộng = tiền hàng + thuế
-  const total = total_amount + taxes;
 
   return (
     <div className="space-y-6">
@@ -52,12 +45,7 @@ export default function CartSummary({ showPaymentSection = false }) {
       <div className="space-y-3 px-1">
         <div className="flex justify-between text-base">
           <span className="text-gray-600">Tổng tiền hàng</span>
-          <span className="font-medium text-[#333]">{total_amount.toLocaleString('vi-VN')}₫</span>
-        </div>
-
-        <div className="flex justify-between text-base">
-          <span className="text-gray-600">Thuế VAT</span>
-          <span className="font-medium text-[#333]">{taxes.toLocaleString('vi-VN')}₫</span>
+          <span className="font-medium text-[#333]">{total.toLocaleString('vi-VN')}₫</span>
         </div>
 
         {showPaymentSection && selectedItems.length > 0 && (

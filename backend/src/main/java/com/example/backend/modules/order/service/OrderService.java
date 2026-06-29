@@ -1,5 +1,6 @@
 package com.example.backend.modules.order.service;
 
+import com.example.backend.modules.cart.api.CartInternalService;
 import com.example.backend.modules.order.dto.response.AdminOrderResponse;
 import com.example.backend.modules.order.dto.response.CheckoutResponse;
 import com.example.backend.modules.order.dto.resquest.CheckoutRequest;
@@ -7,7 +8,7 @@ import com.example.backend.modules.order.entity.Order;
 import com.example.backend.modules.order.enums.OrderStatus;
 import com.example.backend.modules.order.repo.OrderRepository;
 import com.example.backend.modules.payment.api.PaymentInternalService;
-import com.example.backend.modules.payment.api.PaymentLinkSnapshot;
+import com.example.backend.modules.payment.dto.response.PaymentLinkResponse;
 import com.example.backend.modules.payment.enums.PaymentMethod;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final PaymentInternalService paymentInternalService;
+    private final CartInternalService cartInternalService;
 
     public List<AdminOrderResponse> getAllOrdersForAdmin() {
         // Lấy danh sách đơn hàng, sắp xếp mới nhất lên đầu
@@ -49,18 +51,11 @@ public class OrderService {
         }).toList();
     }
 
-    // Giả định: Bạn sẽ cần tiêm thêm CartInternalApi để lấy danh sách sản phẩm trong giỏ
-    // private final CartInternalApi cartInternalApi;
 
     @Transactional(rollbackFor = Exception.class)
     public CheckoutResponse checkout(Integer userId, CheckoutRequest request, String ipAddress) {
 
-        // 1. Lấy danh sách sản phẩm đang được check từ module Cart
-        // Danh sách này dùng để tạo chi tiết đơn hàng (OrderDetail) và tính tổng tiền.
-        // BigDecimal totalAmount = cartInternalApi.calculateTotalCheckedItems(userId);
-
-        // Mock dữ liệu tạm thời để test luồng VNPay
-        BigDecimal totalAmount = new BigDecimal("500000");
+        BigDecimal totalAmount = cartInternalService.calculateTotalCheckedItems(userId);
 
         // 2. Lưu đơn hàng vào Database với trạng thái mặc định là PENDING
         Order order = new Order();
@@ -80,7 +75,7 @@ public class OrderService {
         if (request.getPaymentMethod() == PaymentMethod.VNPAY) {
 
             // Gọi sang cổng API của module Payment
-            PaymentLinkSnapshot paymentSnapshot = paymentInternalService.createVNPayUrl(
+            PaymentLinkResponse paymentLinkResponse = paymentInternalService.createVNPayUrl(
                     order.getId(),
                     totalAmount,
                     ipAddress
@@ -89,7 +84,7 @@ public class OrderService {
             // Đóng gói URL trả về cho Frontend
             return CheckoutResponse.builder()
                     .orderId(order.getId())
-                    .paymentUrl(paymentSnapshot.paymentUrl())
+                    .paymentUrl(paymentLinkResponse.getPaymentUrl())
                     .build();
         }
 
