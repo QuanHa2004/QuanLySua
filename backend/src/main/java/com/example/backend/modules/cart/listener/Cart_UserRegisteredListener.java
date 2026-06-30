@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class CartUserRegisteredListener {
+public class Cart_UserRegisteredListener {
     private final CartRepository cartRepository;
 
     @ApplicationModuleListener

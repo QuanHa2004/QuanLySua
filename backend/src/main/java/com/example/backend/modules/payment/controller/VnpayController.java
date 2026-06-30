@@ -2,7 +2,8 @@ package com.example.backend.modules.payment.controller;
 
 import com.example.backend.modules.payment.entity.Payment;
 import com.example.backend.modules.payment.enums.PaymentStatus;
-import com.example.backend.modules.payment.event.TransactionEvent;
+import com.example.backend.modules.payment.event.TransactionFailedEvent;
+import com.example.backend.modules.payment.event.TransactionSuccessEvent;
 import com.example.backend.modules.payment.repo.PaymentRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -63,9 +64,10 @@ public class VnpayController {
 
         if (isSuccess) {
             // Chỉ khi thành công mới phát sự kiện cho Order và Cart xử lý
-            eventPublisher.publishEvent(new TransactionEvent(orderId, vnp_TransactionNo));
+            eventPublisher.publishEvent(new TransactionSuccessEvent(orderId, vnp_TransactionNo));
             redirectUrl += "/success?status=success&order_id=" + orderId;
         } else {
+            eventPublisher.publishEvent(new TransactionFailedEvent(orderId));
             // Giao dịch thất bại / Người dùng hủy
             // Tùy chọn: Có thể phát thêm PaymentFailedEvent(orderId) nếu cần logic nhả lại hàng trong kho
             redirectUrl += "/failed?status=cancel&order_id=" + orderId;

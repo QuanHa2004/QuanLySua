@@ -1,4 +1,4 @@
-package com.example.backend.modules.product.api;
+package com.example.backend.modules.product.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;

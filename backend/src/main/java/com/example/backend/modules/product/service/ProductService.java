@@ -1,6 +1,6 @@
 package com.example.backend.modules.product.service;
 
-import com.example.backend.modules.product.api.ProductResponse;
+import com.example.backend.modules.product.dto.response.ProductResponse;
 import com.example.backend.modules.product.dto.request.AddProductRequest;
 import com.example.backend.modules.product.dto.request.ProductFilterRequest;
 import com.example.backend.modules.product.dto.response.AdminProductResponse;

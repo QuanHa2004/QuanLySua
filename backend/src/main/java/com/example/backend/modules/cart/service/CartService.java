@@ -7,7 +7,7 @@ import com.example.backend.modules.cart.entity.CartItem;
 import com.example.backend.modules.cart.repo.CartItemRepository;
 import com.example.backend.modules.cart.repo.CartRepository;
 import com.example.backend.modules.product.api.ProductInternalService;
-import com.example.backend.modules.product.api.ProductResponse;
+import com.example.backend.modules.product.api.ProductSnapShot;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -49,7 +49,7 @@ public class CartService {
         return items.stream().map(item -> {
 
             // Lấy thông tin sản phẩm thông qua Internal API của module Product
-            ProductResponse product = productInternalService.getProductSnapshot(item.getProductId());
+            ProductSnapShot product = productInternalService.getProductSnapshot(item.getProductId());
 
             return CartResponse.builder()
                     .productId(product.getProductId())

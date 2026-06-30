@@ -1,7 +1,7 @@
 package com.example.backend.modules.product.service;
 
 import com.example.backend.modules.product.api.ProductInternalService;
-import com.example.backend.modules.product.api.ProductResponse;
+import com.example.backend.modules.product.api.ProductSnapShot;
 import com.example.backend.modules.product.entity.Product;
 import com.example.backend.modules.product.repo.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,11 +17,11 @@ public class ProductInternalServiceImpl implements ProductInternalService {
 
     // Hàm này được thiết kế riêng để các module khác (như cart, order) gọi vào
     @Override
-    public ProductResponse getProductSnapshot(Integer productId) {
+    public ProductSnapShot getProductSnapshot(Integer productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
 
-        return ProductResponse.builder()
+        return ProductSnapShot.builder()
                 .productId(product.getId())
                 .productName(product.getName())
                 .price(product.getPrice())

@@ -44,7 +44,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Cấu hình dựa trên API Frontend thực tế của bạn
                         .requestMatchers("/register", "/login", "/auth/**", "/customer/**", "/payment/**").permitAll()
-                        .requestMatchers("/admin/**").hasRole("Admin")
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
 

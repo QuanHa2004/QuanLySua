@@ -3,7 +3,7 @@ package com.example.backend.modules.cart.listener;
 import com.example.backend.modules.cart.repo.CartItemRepository;
 import com.example.backend.modules.cart.repo.CartRepository;
 import com.example.backend.modules.order.api.OrderInternalService;
-import com.example.backend.modules.payment.event.TransactionEvent;
+import com.example.backend.modules.payment.event.TransactionSuccessEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.modulith.events.ApplicationModuleListener;
@@ -12,13 +12,13 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class CartTransactionListener {
+public class Cart_TransactionListener {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final OrderInternalService orderInternalService;
 
     @ApplicationModuleListener
-    public void clearCartOnPaymentSuccess(TransactionEvent event) {
+    public void clearCartOnPaymentSuccess(TransactionSuccessEvent event) {
         log.info("Module Cart nhận sự kiện thanh toán thành công cho Order ID: {}", event.orderId());
 
         try {

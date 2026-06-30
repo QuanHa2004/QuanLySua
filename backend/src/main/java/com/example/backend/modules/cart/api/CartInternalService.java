@@ -1,7 +1,7 @@
 package com.example.backend.modules.cart.api;
 
-import java.math.BigDecimal;
+import java.util.List;
 
 public interface CartInternalService {
-    BigDecimal calculateTotalCheckedItems(Integer userId);
+    List<CartItemSnapshot> getCheckedItemsSnapshot(Integer userId);
 }
