@@ -18,12 +18,11 @@ export default function OrderList() {
     const [rows, setRows] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     
-    // State mới: Lưu trữ các ID đơn hàng đang trong quá trình được click duyệt
+    // State: Dùng chung để khóa nút bấm khi đang gọi API (tránh click đúp)
     const [processingIds, setProcessingIds] = useState(new Set());
 
     const token = localStorage.getItem("access_token");
 
-    // Tách hàm fetch data ra để có thể tái sử dụng nếu cần
     const fetchOrders = async () => {
         try {
             const res = await fetch("http://localhost:8080/admin/orders", {
@@ -46,17 +45,13 @@ export default function OrderList() {
         fetchOrders();
     }, []);
 
-    // Hàm xử lý khi Admin bấm duyệt đơn COD
+    // 1. Hàm xử lý duyệt COD (PENDING -> PROCESSING)
     const handleConfirmCod = async (orderId) => {
-        if (!window.confirm(`Bạn có chắc chắn muốn duyệt đơn hàng #${orderId} không?`)) {
-            return;
-        }
+        if (!window.confirm(`Bạn có chắc chắn muốn duyệt đơn hàng #${orderId} không?`)) return;
 
-        // Đưa orderId này vào trạng thái đang loading
         setProcessingIds(prev => new Set(prev).add(orderId));
 
         try {
-            // Gọi vào API Controller Admin bạn vừa viết (sửa lại port/đường dẫn nếu cần)
             const res = await fetch(`http://localhost:8080/admin/orders/${orderId}/confirm-cod`, {
                 method: "PUT",
                 headers: {
@@ -68,13 +63,9 @@ export default function OrderList() {
             const data = await res.json();
 
             if (res.ok && data.success) {
-                alert("Duyệt đơn thành công! Hệ thống đã tự động trừ kho.");
-                
-                // Cập nhật lại UI ngay lập tức (Optimistic UI Update) mà không cần gọi lại API get list
+                alert("Duyệt đơn thành công! Kho đã được trừ.");
                 setRows(prevRows => prevRows.map(row => 
-                    row.order_id === orderId 
-                        ? { ...row, status: "PROCESSING" } 
-                        : row
+                    row.order_id === orderId ? { ...row, status: "PROCESSING" } : row
                 ));
             } else {
                 alert(data.message || "Có lỗi xảy ra khi duyệt đơn.");
@@ -82,7 +73,44 @@ export default function OrderList() {
         } catch (error) {
             alert("Lỗi kết nối đến máy chủ.");
         } finally {
-            // Xóa orderId khỏi danh sách loading
+            setProcessingIds(prev => {
+                const next = new Set(prev);
+                next.delete(orderId);
+                return next;
+            });
+        }
+    };
+
+    // 2. [MỚI] Hàm xử lý Xuất giao hàng (PROCESSING -> SHIPPING)
+    const handleShipOrder = async (orderId) => {
+        if (!window.confirm(`Xác nhận xuất kho và đi giao đơn hàng #${orderId}?`)) return;
+
+        setProcessingIds(prev => new Set(prev).add(orderId));
+
+        try {
+            const res = await fetch(`http://localhost:8080/admin/orders/${orderId}/ship`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                // Truyền body rỗng vì Backend đã xử lý lấy tọa độ mặc định nếu null
+                body: JSON.stringify({}) 
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                alert("Xuất kho thành công! Hệ thống đang tính toán thời gian giao.");
+                setRows(prevRows => prevRows.map(row => 
+                    row.order_id === orderId ? { ...row, status: "SHIPPING" } : row
+                ));
+            } else {
+                alert(data.message || "Có lỗi xảy ra khi xuất giao hàng.");
+            }
+        } catch (error) {
+            alert("Lỗi kết nối đến máy chủ.");
+        } finally {
             setProcessingIds(prev => {
                 const next = new Set(prev);
                 next.delete(orderId);
@@ -116,8 +144,12 @@ export default function OrderList() {
                         ) : rows.length > 0 ? (
                             rows.map(item => {
                                 const status = statusMap[item.status] || statusMap.PENDING;
+                                
+                                // Kiểm tra các trạng thái để hiển thị nút tương ứng
                                 const isPending = item.status === "PENDING" || item.status === "pending";
-                                const isProcessing = processingIds.has(item.order_id);
+                                const isProcessingStatus = item.status === "PROCESSING" || item.status === "processing";
+                                
+                                const isActionLoading = processingIds.has(item.order_id);
 
                                 return (
                                     <tr
@@ -153,17 +185,31 @@ export default function OrderList() {
                                             </span>
                                         </td>
 
-                                        {/* Cột thao tác mới */}
+                                        {/* Cột thao tác */}
                                         <td className="px-6 py-4 text-center">
+                                            
+                                            {/* Nút DUYỆT COD (Chỉ hiện khi PENDING) */}
                                             {isPending && (
                                                 <button
                                                     onClick={() => handleConfirmCod(item.order_id)}
-                                                    disabled={isProcessing}
+                                                    disabled={isActionLoading}
                                                     className="px-4 py-2 text-xs font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors shadow-sm"
                                                 >
-                                                    {isProcessing ? "Đang xử lý..." : "Duyệt COD"}
+                                                    {isActionLoading ? "Đang xử lý..." : "Duyệt COD"}
                                                 </button>
                                             )}
+
+                                            {/* Nút GIAO HÀNG (Chỉ hiện khi PROCESSING) */}
+                                            {isProcessingStatus && (
+                                                <button
+                                                    onClick={() => handleShipOrder(item.order_id)}
+                                                    disabled={isActionLoading}
+                                                    className="px-4 py-2 text-xs font-bold text-white bg-yellow-500 rounded-lg hover:bg-yellow-600 disabled:bg-yellow-300 disabled:cursor-not-allowed transition-colors shadow-sm"
+                                                >
+                                                    {isActionLoading ? "Đang xử lý..." : "Giao hàng"}
+                                                </button>
+                                            )}
+
                                         </td>
                                     </tr>
                                 );

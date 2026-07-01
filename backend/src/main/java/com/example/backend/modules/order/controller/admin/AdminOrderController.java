@@ -1,9 +1,15 @@
 package com.example.backend.modules.order.controller.admin;
 
 import com.example.backend.modules.order.dto.response.AdminOrderResponse;
+import com.example.backend.modules.order.dto.resquest.ShipOrderRequest;
+import com.example.backend.modules.order.entity.Order;
+import com.example.backend.modules.order.enums.OrderStatus;
+import com.example.backend.modules.order.event.OrderShippedEvent;
+import com.example.backend.modules.order.repo.OrderRepository;
 import com.example.backend.modules.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +24,9 @@ import java.util.Map;
 public class AdminOrderController {
 
     private final OrderService orderService;
+    private final OrderRepository orderRepository;
+    private final ApplicationEventPublisher eventPublisher;
+
 
     @GetMapping
     public ResponseEntity<?> getAllOrders() {
@@ -54,6 +63,17 @@ public class AdminOrderController {
                     "success", false,
                     "message", e.getMessage()
             ));
+        }
+    }
+
+    @PutMapping("/{orderId}/ship")
+    public ResponseEntity<Map<String, Object>> shipOrder(@PathVariable Integer orderId) {
+        log.info("➔ [Admin API] Yêu cầu giao hàng cho Order ID: {}", orderId);
+        try {
+            orderService.shipOrder(orderId); // Chỉ truyền đúng ID
+            return ResponseEntity.ok(Map.of("success", true, "message", "Đã xuất kho thành công."));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
         }
     }
 }

@@ -10,6 +10,7 @@ import com.example.backend.modules.order.entity.OrderDetail;
 import com.example.backend.modules.order.enums.OrderStatus;
 import com.example.backend.modules.order.event.OrderCreatedEvent;
 import com.example.backend.modules.order.event.OrderProcessingEvent;
+import com.example.backend.modules.order.event.OrderShippedEvent;
 import com.example.backend.modules.order.repo.OrderDetailRepository;
 import com.example.backend.modules.order.repo.OrderRepository;
 import com.example.backend.modules.payment.api.PaymentInternalService;
@@ -86,6 +87,9 @@ public class OrderService {
         order.setPhone(request.getPhone());
         order.setDeliveryAddress(request.getDeliveryAddress());
 
+        order.setCustomerLng(request.getCustomerLng());
+        order.setCustomerLat(request.getCustomerLat());
+
         // Lưu Order để lấy ID tự tăng
         order = orderRepository.save(order);
 
@@ -150,5 +154,27 @@ public class OrderService {
 
         // 2. PHÁT SỰ KIỆN để trừ kho và dọn giỏ hàng
         eventPublisher.publishEvent(new OrderProcessingEvent(order.getId(), order.getUserId()));
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void shipOrder(Integer orderId) { // Bỏ 2 tham số Lng, Lat ở hàm này đi
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng mã #" + orderId));
+
+        if (order.getStatus() != OrderStatus.PROCESSING) {
+            throw new RuntimeException("Lỗi: Chỉ có thể giao đơn hàng đang ở trạng thái 'Đang xử lý'!");
+        }
+
+        order.setStatus(OrderStatus.SHIPPING);
+        orderRepository.save(order);
+
+        // LẤY TỌA ĐỘ TRỰC TIẾP TỪ ENTITY ORDER ĐỂ PHÁT SỰ KIỆN
+        String lng = order.getCustomerLng() != null ? order.getCustomerLng() : "106.6297"; // Fallback dự phòng
+        String lat = order.getCustomerLat() != null ? order.getCustomerLat() : "10.8231";
+
+        eventPublisher.publishEvent(new OrderShippedEvent(order.getId(), lng, lat));
+
+        log.info("➔ [Admin Service] Đã chuyển đơn {} sang SHIPPING.", orderId);
     }
 }

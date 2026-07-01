@@ -17,4 +17,7 @@ public class CheckoutRequest {
 
     @JsonProperty("delivery_address")
     private String deliveryAddress;
+
+    private String customerLng;
+    private String customerLat;
 }

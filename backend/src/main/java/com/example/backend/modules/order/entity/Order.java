@@ -59,4 +59,10 @@ public class Order {
 
     @Column(columnDefinition = "TEXT")
     private String note;
+
+    @Column(name = "customer_lng", length = 50)
+    private String customerLng;
+
+    @Column(name = "customer_lat", length = 50)
+    private String customerLat;
 }

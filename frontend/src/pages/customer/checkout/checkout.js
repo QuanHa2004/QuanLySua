@@ -12,24 +12,92 @@ export default function Checkout() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
+    // State quản lý danh sách địa giới hành chính
+    const [provinces, setProvinces] = useState([]);
+    const [districts, setDistricts] = useState([]);
+    const [wards, setWards] = useState([]);
+
     const [formData, setFormData] = useState({
         paymentMethod: 'COD'
     });
 
     const [customerInfo, setCustomerInfo] = useState({
         fullName: '',
-        phone: '',
-        address: ''
+        phone: ''
     });
 
-    // Gọi API lấy thông tin người dùng ngay khi vào trang
+    // State quản lý địa chỉ chi tiết theo chuẩn 4 trường
+    const [addressState, setAddressState] = useState({
+        provinceCode: "",
+        provinceName: "",
+        districtCode: "",
+        districtName: "",
+        wardCode: "",
+        wardName: "",
+        street: ""
+    });
+
     useEffect(() => {
         fetchUser();
+        fetchProvinces(); // Tải danh sách Tỉnh/Thành phố ngay khi vào trang
     }, []);
 
+    // Tải danh sách Tỉnh/Thành
+    const fetchProvinces = async () => {
+        try {
+            const res = await fetch("https://provinces.open-api.vn/api/p/");
+            if (!res.ok) throw new Error();
+            const data = await res.json();
+            setProvinces(data);
+        } catch (error) {
+            console.error("Lỗi tải danh sách Tỉnh/Thành:", error);
+        }
+    };
+
+    // Tải danh sách Quận/Huyện khi Tỉnh thay đổi
+    useEffect(() => {
+        if (!addressState.provinceCode) {
+            setDistricts([]);
+            setWards([]);
+            return;
+        }
+        const fetchDistricts = async () => {
+            try {
+                const res = await fetch(`https://provinces.open-api.vn/api/p/${addressState.provinceCode}?depth=2`);
+                if (!res.ok) throw new Error();
+                const data = await res.json();
+                setDistricts(data.districts || []);
+                setWards([]);
+            } catch (error) {
+                console.error("Lỗi tải danh sách Quận/Huyện:", error);
+            }
+        };
+        fetchDistricts();
+    }, [addressState.provinceCode]);
+
+    // Tải danh sách Phường/Xã khi Quận thay đổi
+    useEffect(() => {
+        if (!addressState.districtCode) {
+            setWards([]);
+            return;
+        }
+        const fetchWards = async () => {
+            try {
+                const res = await fetch(`https://provinces.open-api.vn/api/d/${addressState.districtCode}?depth=2`);
+                if (!res.ok) throw new Error();
+                const data = await res.json();
+                setWards(data.wards || []);
+            } catch (error) {
+                console.error("Lỗi tải danh sách Phường/Xã:", error);
+            }
+        };
+        fetchWards();
+    }, [addressState.districtCode]);
+
+    // Lấy thông tin user cũ từ Backend
     const fetchUser = async () => {
         const token = localStorage.getItem("access_token");
-        if (!token) return; // Nếu chưa đăng nhập thì thôi, để form trống
+        if (!token) return;
 
         try {
             const res = await fetch("http://localhost:8080/current_user", {
@@ -39,42 +107,59 @@ export default function Checkout() {
                     Authorization: `Bearer ${token}`,
                 },
             });
-
-            if (!res.ok) {
-                // Token lỗi hoặc hết hạn -> có thể điều hướng login nếu muốn
-                return;
-            }
-
+            if (!res.ok) return;
             const data = await res.json();
-
             setCustomerInfo({
                 fullName: data.full_name || '',
-                phone: data.phone || '',
-                address: data.address || ''
+                phone: data.phone || ''
             });
-
+            
+            // Đổ địa chỉ cũ (nếu có) vào ô Số nhà/Tên đường để khách không phải gõ lại
+            if (data.address) {
+                setAddressState(prev => ({ ...prev, street: data.address }));
+            }
         } catch (err) {
             console.error("Lỗi tải thông tin user:", err);
         }
     };
 
-    // Xử lý khi người dùng gõ vào ô input
+    // Xử lý thay đổi input thông thường
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setCustomerInfo(prev => ({ ...prev, [name]: value }));
-
-        // Xóa lỗi khi người dùng bắt đầu sửa
-        if (formErrors[name]) {
-            setFormErrors(prev => ({ ...prev, [name]: '' }));
-        }
+        if (formErrors[name]) setFormErrors(prev => ({ ...prev, [name]: '' }));
     };
 
-    // Chọn phương thức thanh toán
+    // Xử lý thay đổi dropdown địa chỉ
+    const handleAddressSelect = (e, field) => {
+        const value = e.target.value;
+        const name = e.target.options ? e.target.options[e.target.selectedIndex].text : e.target.value;
+        
+        setAddressState(prev => {
+            const newState = { ...prev, [field]: value };
+            if (field === 'provinceCode') {
+                newState.provinceName = value ? name : "";
+                newState.districtCode = ""; newState.districtName = "";
+                newState.wardCode = ""; newState.wardName = "";
+            } else if (field === 'districtCode') {
+                newState.districtName = value ? name : "";
+                newState.wardCode = ""; newState.wardName = "";
+            } else if (field === 'wardCode') {
+                newState.wardName = value ? name : "";
+            } else if (field === 'street') {
+                newState.street = value;
+            }
+            return newState;
+        });
+        
+        if (formErrors.address) setFormErrors(prev => ({ ...prev, address: '' }));
+    };
+
     const handlePaymentChange = (method) => {
         setFormData(prev => ({ ...prev, paymentMethod: method }));
     };
 
-    // Validate Form
+    // Validate toàn bộ Form
     const validateForm = () => {
         let errors = {};
         let isValid = true;
@@ -93,8 +178,8 @@ export default function Checkout() {
             isValid = false;
         }
 
-        if (!customerInfo.address.trim()) {
-            errors.address = "Vui lòng nhập địa chỉ nhận hàng";
+        if (!addressState.provinceCode || !addressState.districtCode || !addressState.wardCode || !addressState.street.trim()) {
+            errors.address = "Vui lòng chọn đầy đủ Tỉnh/Thành, Quận/Huyện, Phường/Xã và nhập số nhà.";
             isValid = false;
         }
 
@@ -102,7 +187,6 @@ export default function Checkout() {
         return isValid;
     };
 
-    // Xử lý nút Đặt hàng
     const handleCheckout = async () => {
         if (!validateForm()) {
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -112,6 +196,28 @@ export default function Checkout() {
         setError(null);
         setLoading(true);
 
+        // 1. Chuẩn hóa chuỗi địa chỉ
+        const fullAddress = `${addressState.street}, ${addressState.wardName}, ${addressState.districtName}, ${addressState.provinceName}`;
+        
+        // 2. Gọi OpenRouteService dịch địa chỉ ra tọa độ (Geocoding)
+        let customerLng = null;
+        let customerLat = null;
+        try {
+            // Thay bằng API Key thật của bạn
+            const orsApiKey = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjJlYWYxZmNkZDMxYTQ3YzJhZWMwOWY2NDgxZjYyNWIyIiwiaCI6Im11cm11cjY0In0="; 
+            const geoRes = await fetch(`https://api.openrouteservice.org/geocode/search?api_key=${orsApiKey}&text=${encodeURIComponent(fullAddress)}`);
+            const geoData = await geoRes.json();
+            
+            if (geoData.features && geoData.features.length > 0) {
+                const coordinates = geoData.features[0].geometry.coordinates;
+                customerLng = coordinates[0];
+                customerLat = coordinates[1];
+            }
+        } catch (error) {
+            console.warn("Không thể lấy tọa độ, tiến hành tạo đơn hàng với dữ liệu Null.");
+        }
+
+        // 3. Gửi Payload đặt hàng xuống Spring Boot
         try {
             const token = localStorage.getItem('access_token');
             if (!token) {
@@ -122,10 +228,14 @@ export default function Checkout() {
 
             const payload = {
                 payment_method: formData.paymentMethod,
-                full_name: customerInfo.fullName,       // Bổ sung tên
-                phone: customerInfo.phone,              // Bổ sung SĐT
-                delivery_address: customerInfo.address  // Bổ sung Địa chỉ
+                full_name: customerInfo.fullName,
+                phone: customerInfo.phone,
+                delivery_address: fullAddress,
+                customerLng: customerLng?.toString(), // Truyền tọa độ xuống Backend
+                customerLat: customerLat?.toString()
             };
+
+            console.log("Dữ liệu chuẩn bị gửi xuống Backend:", payload);
 
             const response = await fetch('http://localhost:8080/customer/orders/checkout', {
                 method: 'POST',
@@ -138,11 +248,7 @@ export default function Checkout() {
 
             const text = await response.text();
             let data;
-            try {
-                data = JSON.parse(text);
-            } catch {
-                throw new Error("Server Error: " + text);
-            }
+            try { data = JSON.parse(text); } catch { throw new Error("Server Error: " + text); }
 
             if (!response.ok) {
                 if (response.status === 400 && data.error?.includes('cung cấp đầy đủ')) {
@@ -152,22 +258,17 @@ export default function Checkout() {
                 throw new Error(data.error || 'Có lỗi xảy ra khi đặt hàng');
             }
 
-            // ================= XỬ LÝ THÀNH CÔNG =================
+            // Xử lý thành công
             if (data.payment_url) {
-                // 1. Nếu là VNPAY -> Chuyển hướng thẳng sang cổng thanh toán
                 window.location.href = data.payment_url;
             } else {
-                // 2. Nếu là COD -> Chuyển hướng sang trang báo thành công
-                if (fetchCartItems) fetchCartItems(); // Cập nhật lại số lượng giỏ hàng trên Header
-
-                // THÊM `status=success` ĐỂ KHỚP VỚI TRANG CHECKOUT SUCCESS VỪA VIẾT
+                if (fetchCartItems) fetchCartItems();
                 navigate(`/checkout/success?status=success&order_id=${data.order_id}`);
             }
 
         } catch (err) {
             console.error(err);
             setError(err.message);
-            alert("Lỗi: " + err.message);
         } finally {
             setLoading(false);
         }
@@ -188,7 +289,6 @@ export default function Checkout() {
                         </div>
 
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-
                             <div className="lg:col-span-2 space-y-6">
 
                                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-6 md:p-8">
@@ -197,48 +297,92 @@ export default function Checkout() {
                                         Thông tin giao hàng
                                     </h2>
 
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên người nhận <span className="text-red-500">*</span></label>
-                                            <input
-                                                type="text"
-                                                name="fullName"
-                                                value={customerInfo.fullName}
-                                                onChange={handleInputChange}
-                                                placeholder="Ví dụ: Nguyễn Văn A"
-                                                className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all ${formErrors.fullName ? 'border-red-500 bg-red-50' : 'border-gray-200 focus:border-[#1a3c7e]'}`}
-                                            />
-                                            {formErrors.fullName && <p className="text-red-500 text-xs mt-1">{formErrors.fullName}</p>}
+                                    <div className="space-y-5">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên người nhận <span className="text-red-500">*</span></label>
+                                                <input
+                                                    type="text"
+                                                    name="fullName"
+                                                    value={customerInfo.fullName}
+                                                    onChange={handleInputChange}
+                                                    placeholder="Ví dụ: Nguyễn Văn A"
+                                                    className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all ${formErrors.fullName ? 'border-red-500 bg-red-50' : 'border-gray-200 focus:border-[#1a3c7e]'}`}
+                                                />
+                                                {formErrors.fullName && <p className="text-red-500 text-xs mt-1">{formErrors.fullName}</p>}
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại <span className="text-red-500">*</span></label>
+                                                <input
+                                                    type="text"
+                                                    name="phone"
+                                                    value={customerInfo.phone}
+                                                    onChange={handleInputChange}
+                                                    placeholder="Ví dụ: 0912345678"
+                                                    className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all ${formErrors.phone ? 'border-red-500 bg-red-50' : 'border-gray-200 focus:border-[#1a3c7e]'}`}
+                                                />
+                                                {formErrors.phone && <p className="text-red-500 text-xs mt-1">{formErrors.phone}</p>}
+                                            </div>
                                         </div>
 
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại <span className="text-red-500">*</span></label>
-                                            <input
-                                                type="text"
-                                                name="phone"
-                                                value={customerInfo.phone}
-                                                onChange={handleInputChange}
-                                                placeholder="Ví dụ: 0912345678"
-                                                className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all ${formErrors.phone ? 'border-red-500 bg-red-50' : 'border-gray-200 focus:border-[#1a3c7e]'}`}
-                                            />
-                                            {formErrors.phone && <p className="text-red-500 text-xs mt-1">{formErrors.phone}</p>}
-                                        </div>
+                                        {/* Khu vực Chọn Địa chỉ 3 cấp */}
+                                        <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 space-y-4">
+                                            <h3 className="text-sm font-bold text-gray-700 uppercase">Khu vực giao hàng <span className="text-red-500">*</span></h3>
+                                            
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <div>
+                                                    <select
+                                                        value={addressState.provinceCode}
+                                                        onChange={(e) => handleAddressSelect(e, 'provinceCode')}
+                                                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3c7e]"
+                                                    >
+                                                        <option value="">-- Tỉnh / Thành phố --</option>
+                                                        {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
+                                                    </select>
+                                                </div>
 
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ nhận hàng <span className="text-red-500">*</span></label>
-                                            <input
-                                                type="text"
-                                                name="address"
-                                                value={customerInfo.address}
-                                                onChange={handleInputChange}
-                                                placeholder="Số nhà, tên đường, phường/xã, quận/huyện..."
-                                                className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all ${formErrors.address ? 'border-red-500 bg-red-50' : 'border-gray-200 focus:border-[#1a3c7e]'}`}
-                                            />
+                                                <div>
+                                                    <select
+                                                        value={addressState.districtCode}
+                                                        onChange={(e) => handleAddressSelect(e, 'districtCode')}
+                                                        disabled={!addressState.provinceCode}
+                                                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3c7e] disabled:bg-gray-100"
+                                                    >
+                                                        <option value="">-- Quận / Huyện --</option>
+                                                        {districts.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
+                                                    </select>
+                                                </div>
+
+                                                <div>
+                                                    <select
+                                                        value={addressState.wardCode}
+                                                        onChange={(e) => handleAddressSelect(e, 'wardCode')}
+                                                        disabled={!addressState.districtCode}
+                                                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3c7e] disabled:bg-gray-100"
+                                                    >
+                                                        <option value="">-- Phường / Xã --</option>
+                                                        {wards.map(w => <option key={w.code} value={w.code}>{w.name}</option>)}
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <input
+                                                    type="text"
+                                                    value={addressState.street}
+                                                    onChange={(e) => handleAddressSelect(e, 'street')}
+                                                    placeholder="Ví dụ: Số 123 Đường Nam Kỳ Khởi Nghĩa..."
+                                                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3c7e]"
+                                                />
+                                            </div>
+                                            
                                             {formErrors.address && <p className="text-red-500 text-xs mt-1">{formErrors.address}</p>}
                                         </div>
                                     </div>
                                 </div>
 
+                                {/* Component Phương thức thanh toán VNPAY/COD giữ nguyên như cũ */}
                                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-6 md:p-8">
                                     <h2 className="text-[#1a3c7e] text-xl font-bold flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
                                         <span className="material-symbols-outlined text-2xl">account_balance_wallet</span>
@@ -254,24 +398,14 @@ export default function Checkout() {
                                             onClick={() => handlePaymentChange('VNPAY')}
                                         >
                                             <div className="flex items-center justify-center">
-                                                <input
-                                                    type="radio"
-                                                    name="payment"
-                                                    checked={formData.paymentMethod === 'VNPAY'}
-                                                    readOnly
-                                                    className="w-5 h-5 accent-[#1a3c7e]"
-                                                />
+                                                <input type="radio" checked={formData.paymentMethod === 'VNPAY'} readOnly className="w-5 h-5 accent-[#1a3c7e]"/>
                                             </div>
                                             <div className="flex-1">
                                                 <p className="font-bold text-[#333] text-lg">Ví VNPAY / Thẻ ATM / QR Code</p>
                                                 <p className="text-sm text-gray-500 mt-1">Thanh toán an toàn, nhanh chóng qua cổng VNPAY</p>
                                             </div>
                                             <div className="h-8 md:h-10 w-auto bg-white rounded px-2 py-1 flex items-center justify-center border border-gray-100">
-                                                <img
-                                                    src="https://sandbox.vnpayment.vn/paymentv2/images/logo-vnpay@2x.png"
-                                                    alt="VNPAY"
-                                                    className="h-full object-contain"
-                                                />
+                                                <img src="https://sandbox.vnpayment.vn/paymentv2/images/logo-vnpay@2x.png" alt="VNPAY" className="h-full object-contain"/>
                                             </div>
                                         </label>
 
@@ -283,13 +417,7 @@ export default function Checkout() {
                                             onClick={() => handlePaymentChange('COD')}
                                         >
                                             <div className="flex items-center justify-center">
-                                                <input
-                                                    type="radio"
-                                                    name="payment"
-                                                    checked={formData.paymentMethod === 'COD'}
-                                                    readOnly
-                                                    className="w-5 h-5 accent-[#1a3c7e]"
-                                                />
+                                                <input type="radio" checked={formData.paymentMethod === 'COD'} readOnly className="w-5 h-5 accent-[#1a3c7e]"/>
                                             </div>
                                             <div className="flex-1">
                                                 <p className="font-bold text-[#333] text-lg">Thanh toán khi nhận hàng (COD)</p>
@@ -301,7 +429,6 @@ export default function Checkout() {
                                         </label>
                                     </div>
                                 </div>
-
                             </div>
 
                             <div className="lg:col-span-1">
