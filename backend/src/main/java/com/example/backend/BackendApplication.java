@@ -7,8 +7,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EntityScan(basePackages = {
-		"com.example.backend", // Thay bằng package gốc dự án của bạn
-		"org.springframework.modulith.events.jpa" // Bắt buộc phải có dòng này
+		"com.example.backend",
+		"org.springframework.modulith.events.jpa"
 })
 @EnableScheduling
 public class BackendApplication {

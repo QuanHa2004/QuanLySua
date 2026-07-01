@@ -1,4 +1,4 @@
-package com.example.backend.modules.product.service;
+package com.example.backend.modules.product.service.admin;
 
 import com.example.backend.modules.product.dto.request.CategoryRequest;
 import com.example.backend.modules.product.dto.response.CategoryResponse;
@@ -13,11 +13,10 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class CategoryService {
+public class AdminCategoryService {
 
     private final CategoryRepository categoryRepository;
 
-    // Lấy danh sách danh mục và map sang DTO
     public List<CategoryResponse> getAllCategories() {
         return categoryRepository.findAll().stream()
                 .map(category -> CategoryResponse.builder()
@@ -27,10 +26,8 @@ public class CategoryService {
                 .toList();
     }
 
-    // Thêm danh mục mới
     @Transactional
     public void addCategory(CategoryRequest request) {
-        // Validation kiểm tra trùng lặp (trả về lỗi 409 cho Frontend)
         if (categoryRepository.existsByName(request.getCategoryName().trim())) {
             throw new CategoryAlreadyExistsException("Tên danh mục này đã tồn tại!");
         }

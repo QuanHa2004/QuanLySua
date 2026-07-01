@@ -1,4 +1,4 @@
-package com.example.backend.modules.user.service;
+package com.example.backend.modules.user.service.admin;
 
 import com.example.backend.modules.user.dto.request.UpdateStatusUserRequest;
 import com.example.backend.modules.user.dto.response.UserResponse;
@@ -12,7 +12,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class UserService {
+public class AdminUserService {
 
     private final UserRepository userRepository;
 

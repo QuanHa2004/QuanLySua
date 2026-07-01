@@ -16,10 +16,9 @@ public class Order_DeliveryTimeCalculatedListener {
     @ApplicationModuleListener
     public void onDeliveryTimeCalculated(DeliveryTimeCalculatedEvent event) {
         orderRepository.findById(event.orderId()).ifPresent(order -> {
-            // Cộng thời gian hiện tại với số phút giao hàng + 10 phút hao phí đóng gói
+
             LocalDateTime deliveryTime = LocalDateTime.now().plusMinutes(event.estimatedMinutes() + 10);
 
-            // Cập nhật vào trường delivery_date trong bảng Order
             order.setDeliveryDate(deliveryTime);
             orderRepository.save(order);
         });

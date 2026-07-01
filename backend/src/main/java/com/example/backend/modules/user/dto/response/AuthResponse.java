@@ -23,6 +23,6 @@ public class AuthResponse {
         private String email;
         private String fullName;
         @JsonProperty("is_deleted")
-        private Integer isDeleted; // Trả về 1 (true) hoặc 0 (false) để FE xử lý
+        private Integer isDeleted;
     }
 }

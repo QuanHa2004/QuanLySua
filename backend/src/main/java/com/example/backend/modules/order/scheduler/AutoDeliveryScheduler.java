@@ -20,13 +20,10 @@ public class AutoDeliveryScheduler {
     @Transactional
     public void autoCompleteDeliveredOrders() {
 
-        int updatedCount = orderRepository.autoUpdateDeliveredStatus(
+        orderRepository.autoUpdateDeliveredStatus(
                 OrderStatus.DELIVERED,
                 OrderStatus.SHIPPING
         );
 
-        if (updatedCount > 0) {
-            log.info("➔ [Cron Job] Đã tự động cập nhật {} đơn hàng thành DELIVERED", updatedCount);
-        }
     }
 }

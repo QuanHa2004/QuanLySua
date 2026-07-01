@@ -15,7 +15,6 @@ public class RegisterRequest {
     @Email(message = "Email không hợp lệ")
     private String email;
 
-    // FE regex của bạn check 10 số bắt đầu bằng 0 (^0\d{9}$)
     @Pattern(regexp = "^0\\d{9}$", message = "Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0")
     private String phone;
 
