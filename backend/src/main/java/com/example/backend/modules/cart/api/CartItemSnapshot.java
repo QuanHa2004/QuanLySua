@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 public class CartItemSnapshot {
     Integer productId;
     String productName;
-    BigDecimal price; // Giá tại thời điểm hiện tại (đã trừ discount nếu có)
+    BigDecimal price;
     Integer quantity;
     BigDecimal totalItemAmount;
 }

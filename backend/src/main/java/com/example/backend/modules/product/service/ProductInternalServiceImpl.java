@@ -15,7 +15,6 @@ public class ProductInternalServiceImpl implements ProductInternalService {
 
     private final ProductRepository productRepository;
 
-    // Hàm này được thiết kế riêng để các module khác (như cart, order) gọi vào
     @Override
     public ProductSnapShot getProductSnapshot(Integer productId) {
         Product product = productRepository.findById(productId)

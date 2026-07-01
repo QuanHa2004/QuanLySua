@@ -34,16 +34,12 @@ public class ProductDetailResponse {
     @JsonProperty("category_name")
     private String categoryName;
 
-    // --- Thông tin chi tiết & dinh dưỡng (từ bảng ProductDetail) ---
-    // (Phục vụ cho component <NutrientSection />)
-
     @JsonProperty("ingredients")
     private String ingredients;
 
     @JsonProperty("usage_instruction")
-    private String usageInstruction; // Cột `usage` mà chúng ta đã đổi tên lúc trước
+    private String usageInstruction;
 
-    // Các chỉ số vĩ mô (Macros)
     @JsonProperty("calories")
     private BigDecimal calories;
 
@@ -56,7 +52,6 @@ public class ProductDetailResponse {
     @JsonProperty("carbs")
     private BigDecimal carbs;
 
-    // JSON String chứa Vitamin và Khoáng chất
     @JsonProperty("vitamins")
     private String vitamins;
 

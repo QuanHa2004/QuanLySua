@@ -2,7 +2,7 @@ package com.example.backend.modules.product.controller.admin;
 
 import com.example.backend.modules.product.dto.request.AddProductRequest;
 import com.example.backend.modules.product.dto.response.AdminProductResponse;
-import com.example.backend.modules.product.service.ProductService;
+import com.example.backend.modules.product.service.admin.AdminProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,7 +17,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AdminProductController {
 
-    private final ProductService productService;
+    private final AdminProductService productService;
 
     @GetMapping
     public ResponseEntity<?> getAdminProductList() {

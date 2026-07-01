@@ -20,6 +20,10 @@ export default function Profile() {
         avatar_url: "",
     });
 
+
+    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
     // Hàm lấy thông tin người dùng hiện tại
     const fetchUser = async () => {
         try {
@@ -46,7 +50,7 @@ export default function Profile() {
     // Hàm lấy lịch sử mua hàng
     const fetchOrders = async () => {
         try {
-            const res = await fetch("http://localhost:8080/orders/history", {
+            const res = await fetch("http://localhost:8080/customer/orders/history", {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -105,6 +109,27 @@ export default function Profile() {
         }
     };
 
+    const fetchOrderDetail = async (orderId) => {
+        try {
+            const res = await fetch(`http://localhost:8080/customer/orders/${orderId}/details`, {
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            const json = await res.json();
+            if (json.success) {
+                setSelectedOrder(json.data);
+                setIsDetailModalOpen(true);
+            } else {
+                alert(json.message);
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Không thể tải chi tiết đơn hàng.");
+        }
+    };
+
     // Xử lý hủy bỏ chỉnh sửa: quay về dữ liệu cũ
     const handleCancelEdit = () => {
         setUser(backupUser);
@@ -147,11 +172,7 @@ export default function Profile() {
                                     <div className="flex flex-col items-center mb-8">
                                         <div className="relative">
                                             <div className="w-24 h-24 rounded-full border-4 border-blue-50 overflow-hidden mb-4">
-                                                <img
-                                                    src={user.avatar_url}
-                                                    className="w-full h-full object-cover"
-                                                    alt="Avatar"
-                                                />
+                                                
                                             </div>
                                             <div className="absolute bottom-4 right-0 bg-[#1a3c7e] p-1.5 rounded-full border-2 border-white cursor-pointer hover:bg-blue-700">
                                                 <span className="material-symbols-outlined text-white text-xs">edit</span>
@@ -168,7 +189,7 @@ export default function Profile() {
                                             ${tab === "profile"
                                                     ? "bg-[#1a3c7e] text-white shadow-md shadow-blue-200"
                                                     : "text-gray-600 hover:bg-blue-50 hover:text-[#1a3c7e]"}`}
-                                            >
+                                        >
                                             <span className="material-symbols-outlined">person</span>
                                             Thông tin cá nhân
                                         </button>
@@ -327,7 +348,8 @@ export default function Profile() {
                                                                     <p className="text-xs text-gray-500 uppercase font-bold">Tổng tiền</p>
                                                                     <p className="text-[#d32f2f] font-bold text-lg">{Number(order.total_amount).toLocaleString()}₫</p>
                                                                 </div>
-                                                                <button className="px-4 py-2 rounded-lg border border-[#1a3c7e] text-[#1a3c7e] font-bold text-sm hover:bg-[#1a3c7e] hover:text-white transition-all whitespace-nowrap">
+                                                                <button onClick={() => fetchOrderDetail(order.order_id)}
+                                                                    className="px-4 py-2 rounded-lg border border-[#1a3c7e] text-[#1a3c7e] font-bold text-sm hover:bg-[#1a3c7e] hover:text-white transition-all whitespace-nowrap">
                                                                     Chi tiết
                                                                 </button>
                                                             </div>
@@ -344,6 +366,48 @@ export default function Profile() {
                 </main>
 
                 <Footer />
+
+                {isDetailModalOpen && selectedOrder && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                        <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto p-8 shadow-2xl">
+                            <div className="flex justify-between items-center mb-6 border-b pb-4">
+                                <h3 className="text-xl font-bold text-[#1a3c7e]">Đơn hàng #{selectedOrder.order_id}</h3>
+                                <button onClick={() => setIsDetailModalOpen(false)} className="text-gray-400 hover:text-red-500">
+                                    <span className="material-symbols-outlined">close</span>
+                                </button>
+                            </div>
+
+                            <div className="space-y-4 mb-8">
+                                <p><strong>Ngày đặt:</strong> {selectedOrder.order_date}</p>
+                                <p><strong>Trạng thái:</strong> <span className="text-blue-600 font-bold">{selectedOrder.status}</span></p>
+                                <p><strong>Địa chỉ:</strong> {selectedOrder.delivery_address}</p>
+                            </div>
+
+                            <table className="w-full text-left mb-6">
+                                <thead>
+                                    <tr className="text-gray-500 text-sm border-b">
+                                        <th className="pb-2">Sản phẩm</th>
+                                        <th className="pb-2 text-center">SL</th>
+                                        <th className="pb-2 text-right">Thành tiền</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y">
+                                    {selectedOrder.items.map((item, idx) => (
+                                        <tr key={idx} className="py-4">
+                                            <td className="py-3">{item.product_name}</td>
+                                            <td className="py-3 text-center">{item.quantity}</td>
+                                            <td className="py-3 text-right">{Number(item.total_item_amount).toLocaleString()}₫</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+
+                            <div className="text-right border-t pt-4">
+                                <p className="text-lg font-bold text-red-600">Tổng thanh toán: {Number(selectedOrder.total_amount).toLocaleString()}₫</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -18,5 +18,5 @@ public class UserResponse {
     private String address;
 
     @JsonProperty("is_deleted")
-    private Integer isDeleted; // Trả về 1 (Đã khóa) hoặc 0 (Hoạt động)
+    private Integer isDeleted;
 }

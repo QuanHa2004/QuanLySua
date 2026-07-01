@@ -1,30 +1,37 @@
 package com.example.backend.modules.order.dto.response;
 
+import com.example.backend.modules.order.api.OrderItemSnapshot;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
-public class AdminOrderResponse {
+public class OrderDetailResponse {
     @JsonProperty("order_id")
     private Integer orderId;
+
+    @JsonProperty("order_date")
+    private String orderDate;
+
+    private String status;
+
+    @JsonProperty("payment_method")
+    private String paymentMethod;
 
     @JsonProperty("full_name")
     private String fullName;
 
-    @JsonProperty("phone")
     private String phone;
 
-    @JsonProperty("order_date")
-    private LocalDateTime orderDate;
+    @JsonProperty("delivery_address")
+    private String deliveryAddress;
 
     @JsonProperty("total_amount")
     private BigDecimal totalAmount;
 
-    @JsonProperty("status")
-    private String status;
+    private List<OrderItemSnapshot> items;
 }

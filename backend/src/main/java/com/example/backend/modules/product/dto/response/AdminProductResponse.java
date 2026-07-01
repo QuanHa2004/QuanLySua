@@ -34,7 +34,7 @@ public class AdminProductResponse {
         private BigDecimal price;
 
         @JsonProperty("stock_quantity")
-        private Integer stockQuantity; // Số lượng tồn kho dự phòng
+        private Integer stockQuantity;
 
         private List<BatchDto> batches;
     }

@@ -27,7 +27,7 @@ public class AddProductRequest {
     private Integer quantity;
 
     @JsonProperty("expiration_date")
-    private LocalDate expirationDate; // Định dạng YYYY-MM-DD từ FE gửi lên
+    private LocalDate expirationDate;
 
     @JsonProperty("discount_percent")
     private Integer discountPercent = 0;
@@ -49,14 +49,12 @@ public class AddProductRequest {
     @JsonProperty("other_nutrients")
     private String otherNutrients;
 
-    // Dùng BigDecimal để map chính xác với Entity của bạn
     private BigDecimal calories;
     private BigDecimal protein;
     private BigDecimal fat;
     private BigDecimal carbohydrates;
     private BigDecimal sugar;
 
-    // Vi lượng dạng JSON
     private Map<String, String> vitamins;
     private Map<String, String> minerals;
 }

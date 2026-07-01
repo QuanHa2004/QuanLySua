@@ -1,6 +1,5 @@
 package com.example.backend.modules.user.service;
 
-// import các thư viện JWT và Security
 import com.example.backend.modules.user.event.UserRegisteredEvent;
 import com.example.backend.modules.user.dto.request.LoginRequest;
 import com.example.backend.modules.user.dto.request.RegisterRequest;
@@ -25,7 +24,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService; // Bạn sẽ cần tạo một service để gen Token
+    private final JwtService jwtService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -49,7 +48,6 @@ public class AuthService {
 
         userRepository.save(newUser);
 
-        // Bắn Event để module Cart biết và tạo giỏ hàng cho userId này
         eventPublisher.publishEvent(new UserRegisteredEvent(newUser.getId()));
     }
 
@@ -61,7 +59,6 @@ public class AuthService {
             throw new RuntimeException("Sai email hoặc mật khẩu");
         }
 
-        // --- XỬ LÝ KHÓA TÀI KHOẢN (Frontend đang check status 403) ---
         if (user.getIsDeleted()) {
             throw new AccountLockedException("Tài khoản đã bị khóa");
         }

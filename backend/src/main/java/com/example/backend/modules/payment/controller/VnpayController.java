@@ -35,17 +35,13 @@ public class VnpayController {
         String vnp_BankCode = request.getParameter("vnp_BankCode");
         String vnp_Amount = request.getParameter("vnp_Amount");
 
-        // Trích xuất mã đơn hàng bằng Regex an toàn (chỉ lấy số từ chuỗi "Thanh toan don hang 101")
         Integer orderId = Integer.parseInt(vnp_OrderInfo.replaceAll("[^0-9]", ""));
 
-        // CHÚ Ý: VNPay trả về số tiền nhân với 100, cần chia lại cho 100
         BigDecimal actualAmount = new BigDecimal(vnp_Amount).divide(new BigDecimal(100));
 
-        // 2. Xác định trạng thái giao dịch
         boolean isSuccess = "00".equals(vnp_ResponseCode);
         PaymentStatus currentStatus = isSuccess ? PaymentStatus.SUCCESS : PaymentStatus.FAILED;
 
-        // 3. Xây dựng Object Payment và LƯU VÀO DATABASE
         Payment payment = Payment.builder()
                 .orderId(orderId)
                 .paymentMethod("VNPAY")
@@ -57,23 +53,18 @@ public class VnpayController {
                 .note(vnp_OrderInfo)
                 .build();
 
-        paymentRepository.save(payment); // Lưu lịch sử giao dịch
+        paymentRepository.save(payment);
 
-        // 4. Xử lý điều hướng và Event nội bộ
         String redirectUrl = "http://localhost:3000/checkout";
 
         if (isSuccess) {
-            // Chỉ khi thành công mới phát sự kiện cho Order và Cart xử lý
             eventPublisher.publishEvent(new TransactionSuccessEvent(orderId, vnp_TransactionNo));
             redirectUrl += "/success?status=success&order_id=" + orderId;
         } else {
             eventPublisher.publishEvent(new TransactionFailedEvent(orderId));
-            // Giao dịch thất bại / Người dùng hủy
-            // Tùy chọn: Có thể phát thêm PaymentFailedEvent(orderId) nếu cần logic nhả lại hàng trong kho
             redirectUrl += "/failed?status=cancel&order_id=" + orderId;
         }
 
-        // Đẩy người dùng quay lại giao diện React
         response.sendRedirect(redirectUrl);
     }
 }

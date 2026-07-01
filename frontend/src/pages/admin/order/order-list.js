@@ -42,7 +42,16 @@ export default function OrderList() {
     };
 
     useEffect(() => {
-        fetchOrders();
+        // 1. Gọi lần đầu tiên khi vừa vào trang (có Loading)
+        fetchOrders(false);
+
+        // 2. Thiết lập vòng lặp chạy ngầm mỗi 60 giây (không có Loading)
+        const intervalId = setInterval(() => {
+            fetchOrders(true);
+        }, 60000); // 60000 ms = 1 phút
+
+        // 3. Dọn dẹp bộ đếm khi rời khỏi trang
+        return () => clearInterval(intervalId);
     }, []);
 
     // 1. Hàm xử lý duyệt COD (PENDING -> PROCESSING)

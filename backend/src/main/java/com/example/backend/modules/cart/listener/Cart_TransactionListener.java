@@ -19,24 +19,13 @@ public class Cart_TransactionListener {
 
     @ApplicationModuleListener
     public void clearCartOnPaymentSuccess(TransactionSuccessEvent event) {
-        log.info("Module Cart nhận sự kiện thanh toán thành công cho Order ID: {}", event.orderId());
 
         try {
-            // 1. Gọi sang module Order để hỏi xem Order này của User nào
             Integer userId = orderInternalService.getUserIdByOrderId(event.orderId());
 
-            if (userId == null) {
-                log.warn("Không tìm thấy User ID cho Order ID: {}", event.orderId());
-                return;
-            }
-
-            // 2. Tìm giỏ hàng của User đó
             cartRepository.findByUserId(userId).ifPresentOrElse(cart -> {
 
-                // 3. Thực thi câu lệnh SQL xóa các sản phẩm đã được chọn mua
                 cartItemRepository.deleteCheckedItemsByCartId(cart.getId());
-
-                log.info("Đã xóa thành công các sản phẩm đã thanh toán khỏi giỏ hàng ID: {} của User ID: {}", cart.getId(), userId);
 
             }, () -> {
                 log.warn("Không tìm thấy giỏ hàng của User ID: {}", userId);

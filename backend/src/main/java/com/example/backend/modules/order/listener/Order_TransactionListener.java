@@ -16,7 +16,7 @@ public class Order_TransactionListener {
     private final OrderRepository orderRepository;
     private final ApplicationEventPublisher eventPublisher;
 
-    @ApplicationModuleListener // Chạy ngầm bảo mật, an toàn transaction
+    @ApplicationModuleListener
     public void onPaymentSuccess(TransactionSuccessEvent event) {
         orderRepository.findById(event.orderId()).ifPresent(order -> {
             order.setStatus(OrderStatus.PROCESSING);

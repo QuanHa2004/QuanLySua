@@ -4,7 +4,8 @@ import com.example.backend.modules.product.dto.response.ProductResponse;
 import com.example.backend.modules.product.dto.request.ProductFilterRequest;
 import com.example.backend.modules.product.dto.response.ProductDetailResponse;
 import com.example.backend.modules.product.dto.response.ProductFilterResponse;
-import com.example.backend.modules.product.service.ProductService;
+import com.example.backend.modules.product.service.admin.AdminProductService;
+import com.example.backend.modules.product.service.customer.CustomerProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,17 +16,15 @@ import java.util.Map;
 @RestController
 @RequestMapping("/customer/products")
 @RequiredArgsConstructor
-public class ProductController {
+public class CustomerProductController {
 
-    private final ProductService productService;
-
+    private final CustomerProductService customerProductService;
 
     @GetMapping
     public ResponseEntity<?> getAllProducts() {
         try {
-            List<ProductResponse> responseList = productService.getAllProducts();
+            List<ProductResponse> responseList = customerProductService.getAllProducts();
 
-            // Trả về JSON format: { "data": [...] } để khớp hoàn toàn với Frontend React
             return ResponseEntity.ok(Map.of("data", responseList));
         } catch (Exception e) {
             e.printStackTrace();
@@ -37,12 +36,10 @@ public class ProductController {
     @PostMapping("/filter")
     public ResponseEntity<?> filterProducts(@RequestBody ProductFilterRequest request) {
         try {
-            List<ProductFilterResponse> responseList = productService.filterProducts(request);
+            List<ProductFilterResponse> responseList = customerProductService.filterProducts(request);
 
-            // Trả về JSON bọc trong key "data" khớp hoàn toàn với code React
             return ResponseEntity.ok(Map.of("data", responseList));
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("error", "Lỗi khi lọc sản phẩm"));
         }
     }
@@ -51,10 +48,8 @@ public class ProductController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getProductById(@PathVariable("id") Integer id) {
         try {
-            ProductDetailResponse response = productService.getProductDetail(id);
+            ProductDetailResponse response = customerProductService.getProductDetail(id);
 
-            // Trả thẳng object ra ngoài, KHÔNG bọc trong { "data": ... }
-            // vì đoạn fetch của React đang là: setProduct(data)
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {

@@ -31,7 +31,6 @@ public class VnpayService implements PaymentInternalService {
 
     @Override
     public PaymentLinkResponse createVNPayUrl(Integer orderId, BigDecimal amount, String ipAddress) {
-        // VNPay yêu cầu số tiền nhân 100 và đổi thành chuỗi số nguyên
         long totalAmount = amount.multiply(BigDecimal.valueOf(100)).longValue();
 
         Map<String, String> vnp_Params = new HashMap<>();
@@ -52,7 +51,6 @@ public class VnpayService implements PaymentInternalService {
         vnp_Params.put("vnp_CreateDate", formatter.format(cld.getTime()));
 
         try {
-            // 1. Sắp xếp các tham số theo thứ tự alphabet (Bắt buộc của VNPay)
             List<String> fieldNames = new ArrayList<>(vnp_Params.keySet());
             Collections.sort(fieldNames);
 
@@ -65,12 +63,10 @@ public class VnpayService implements PaymentInternalService {
                 String fieldValue = vnp_Params.get(fieldName);
 
                 if ((fieldValue != null) && (fieldValue.length() > 0)) {
-                    // Build hash data
                     hashData.append(fieldName);
                     hashData.append('=');
                     hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
 
-                    // Build query string
                     query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII.toString()));
                     query.append('=');
                     query.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
@@ -82,11 +78,9 @@ public class VnpayService implements PaymentInternalService {
                 }
             }
 
-            // 2. Sử dụng vnpHashSecret để tạo chữ ký bảo mật (Secure Hash)
             String queryUrl = query.toString();
             String vnp_SecureHash = hmacSHA512(vnpHashSecret, hashData.toString());
 
-            // 3. Nối chữ ký vào cuối URL
             queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
 
             return PaymentLinkResponse.builder()
