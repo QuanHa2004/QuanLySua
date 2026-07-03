@@ -83,6 +83,7 @@ public class AuthService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
         return Map.of(
+                "user_id", user.getId(),
                 "email", user.getEmail(),
                 "full_name", user.getFullName(),
                 "role_id", user.getRole().getId(),

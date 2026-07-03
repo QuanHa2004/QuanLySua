@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -16,11 +17,9 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 
     List<Order> findByUserIdOrderByOrderDateDesc(Integer userId);
 
-    @Modifying(clearAutomatically = true)
-    @Query("UPDATE Order o SET o.status = :newStatus " +
-            "WHERE o.status = :currentStatus AND o.deliveryDate <= CURRENT_TIMESTAMP")
-    int autoUpdateDeliveredStatus(
-            @Param("newStatus") OrderStatus newStatus,
-            @Param("currentStatus") OrderStatus currentStatus
+    @Query("SELECT o FROM Order o WHERE o.status = :status AND o.deliveryDate <= :now")
+    List<Order> findShippedOrdersPastDeliveryDate(
+            @Param("status") OrderStatus status,
+            @Param("now") LocalDateTime now
     );
 }
